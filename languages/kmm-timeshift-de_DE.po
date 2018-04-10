@@ -1,0 +1,45 @@
+# KMM Timeshift
+msgid ""
+msgstr ""
+"Project-Id-Version: KMM Timeshift\n"
+"POT-Creation-Date: 2018-04-10 14:40+0200\n"
+"PO-Revision-Date: 2018-04-10 14:41+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.0.6\n"
+"X-Poedit-KeywordsList: __\n"
+"X-Poedit-Basepath: ../src\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: Core.php:53
+msgid "Timeshift"
+msgstr "Zurück in die Zukunft"
+
+#: Core.php:70
+msgid "Title"
+msgstr "Titel"
+
+#: Core.php:71
+msgid "Snapshot Date"
+msgstr "Speicherzeitpunkt"
+
+#: Core.php:72
+msgid "Author"
+msgstr "Autor"
+
+#: Core.php:73
+msgid "Actions"
+msgstr "Aktionen"
+
+#: Core.php:153
+msgid ""
+"You are editing a historical version! if you save or publish, this will "
+"replace the current live one"
+msgstr ""
+"!!! ACHTUNG !!! Es wird eine alte Version der Story bearbeitet! Beim "
+"Speichern wird die aktuelle Version ersetzt"
