@@ -29,6 +29,10 @@ class TestTimeshift extends \WP_UnitTestCase
         $this->core = new Core('i18n');
     }
 
+    public function testA() {
+      $this->assertEquals(1,1);
+    }
+
 
     public function tearDown()
     {

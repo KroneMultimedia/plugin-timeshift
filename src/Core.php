@@ -14,7 +14,6 @@ class Core
         $this->add_filters();
     }
     public function add_filters() {
-        echo "aaa"; exit;
     }
 
 }
