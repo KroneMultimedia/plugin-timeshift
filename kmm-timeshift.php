@@ -1,19 +1,19 @@
 <?php
 /**
- * Plugin Name: KMM Flattable
+ * Plugin Name: KMM Timeshift
  * Description: This is a short description of what the plugin does.
- * Plugin URI:  http://gitlab.krone.at/WordPress/plugin-flattable
+ * Plugin URI:  http://gitlab.krone.at/WordPress/plugin-timeshift
  * Version:     1.0.0
  * Author:      Krone.at
  * Author URI:  http://www.krone.at
  * Licence:     MIT
- * Text Domain: kmm-flattable
+ * Text Domain: kmm-timeshift
  * Domain Path: /languages
  */
 
-namespace KMM\Flattable;
+namespace KMM\Timeshift;
 
-use KMM\Flattable\Core;
+use KMM\Timeshift\Core;
 
 if ( ! function_exists( 'add_filter' ) ) {
 	return;
