@@ -8,8 +8,8 @@ replace wordpress own revision system, with a system called timeshift.
   
   
   
-  [Screenshot](https://raw.githubusercontent.com/KroneMultimedia/plugin-timeshift/beta/screen.png?asdasdasdasd)
-  
+
+[![Screenshot](https://raw.githubusercontent.com/KroneMultimedia/plugin-timeshift/beta/screen.png?asdasdasdasd)
 
 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/badges/quality-score.png?b=beta)](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/?branch=master)
