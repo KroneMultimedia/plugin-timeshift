@@ -12,6 +12,7 @@ namespace KMM\Timeshift;
 class Core
 {
     private $plugin_dir;
+    private $timeshift_cached_meta;
 
     public function __construct()
     {
@@ -20,25 +21,136 @@ class Core
         $this->plugin_dir = plugin_dir_url(__FILE__) . '../';
         $this->add_filters();
         $this->add_actions();
+        $this->add_metabox();
+    }
+
+    public function hasTimeshifts($post_id)
+    {
+        $post_type = get_post_type($post_id);
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
+        $sql = "select count(1) as amount from $table_name where post_id=" . $post_id;
+        $r = $this->wpdb->get_results($sql);
+
+        if ($r && count($r) == 1) {
+            if (intval($r[0]->amount) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function add_metabox()
+    {
+        $cl = $this;
+        if (! isset($_GET['post']) || ! $this->hasTimeshifts($_GET['post'])) {
+            return;
+        }
+        add_action('add_meta_boxes', function () use ($cl) {
+            add_meta_box('krn-timeshift', __('Timeshift', 'kmm-timeshift'), [$cl, 'timeshift_metabox'], null, 'normal', 'core');
+        });
+    }
+
+    public function timeshift_metabox()
+    {
+        global $post;
+        if (! isset($_GET['post'])) {
+            return;
+        }
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
+        $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
+
+        $row = $this->wpdb->get_results($sql);
+        echo '<table class="widefat fixed">';
+        echo '<thead>';
+        echo '<tr>';
+        echo '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">Title</th>';
+        echo '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">Date</th>';
+        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">Author</th>';
+        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">Actions</th>';
+        echo '</tr>';
+        echo ' </thead>';
+        echo '<tbody>';
+        echo '<tr style="font-weight: 800;">';
+        echo '<td>' . $post->post_title . '</td>';
+        echo '<td>' . $post->post_date . '</td>';
+        echo '<td>' . get_the_author_meta('display_name', $post->post_author) . '</td>';
+        echo "<td><a href='post.php?post=" . $_GET['post'] . "&action=edit'><span class='dashicons dashicons-admin-site'></span></A></td>";
+        echo '</tr>';
+
+        foreach ($row as $rev) {
+            $timeshift = unserialize($rev->post_payload);
+            $style = '';
+            if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id) {
+                $style = 'style="font-style:italic;background-color: lightblue;"';
+            }
+            echo '<tr ' . $style . '>';
+            echo '<td>' . $timeshift->post->post_title . '</td>';
+            echo '<td>' . $rev->create_date . '</td>';
+            echo '<td>' . get_the_author_meta('display_name', $timeshift->post->post_author) . '</td>';
+            echo "<td><a href='post.php?post=" . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . "'><span class='dashicons dashicons-backup'></span></a></td>";
+            echo '</tr>';
+        }
+        echo '</tbody>';
+        echo '</table>';
     }
 
     public function add_filters()
     {
         // When revisioned post meta has changed, trigger a revision save.
         //add_filter('wp_save_post_revision_post_has_changed', [$this, '_wp_check_revisioned_meta_fields_have_changed'], 10, 3);
+
+        add_filter('get_post_metadata', [$this, 'inject_metadata_timeshift'], 1, 4);
+    }
+
+    public function inject_metadata_timeshift($value, $post_id, $key, $single)
+    {
+        if (! isset($_GET['timeshift'])) {
+            return;
+        }
+        //Load timeshift
+        if (! $this->timeshift_cached_meta) {
+            $post_type = get_post_type($post_id);
+            $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
+            $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
+            $r = $this->wpdb->get_results($sql);
+            if ($r && count($r) == 1) {
+                $payload = unserialize($r[0]->post_payload);
+                $this->timeshift_cached_meta = $payload->meta;
+            }
+        }
+        if ($this->timeshift_cached_meta && isset($this->timeshift_cached_meta[$key])) {
+            return $this->timeshift_cached_meta[$key];
+        }
+    }
+
+    public function inject_timeshift($p)
+    {
+        global $post;
+        if (! isset($_GET['timeshift'])) {
+            return;
+        }
+        //Load timeshift
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
+        $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
+        $r = $this->wpdb->get_results($sql);
+        if ($r && count($r) == 1) {
+            $payload = unserialize($r[0]->post_payload);
+            $post = $payload->post;
+        }
     }
 
     public function add_actions()
     {
-        // When restoring a revision, also restore that revisions's revisioned meta.
-        //add_action('wp_restore_post_revision', [$this, '_wp_restore_post_revision_meta'], 10, 2);
-        // When creating or updating an autosave, save any revisioned meta fields.
-        //add_action('wp_creating_autosave', [$this, '_wp_autosave_post_revisioned_meta_fields']);
-        //add_action('wp_before_creating_autosave', [$this, '_wp_autosave_post_revisioned_meta_fields']);
-        // When creating a revision, also save any revisioned meta.
-        //add_action('_wp_put_post_revision', [$this, 'create_revision']);
-
+        add_action('edit_form_top', [$this, 'inject_timeshift'], 1, 1);
         add_action('pre_post_update', [$this, 'pre_post_update'], 2, 1);
+        add_action('admin_notices', function () {
+            if (isset($_GET['timeshift']) && $_GET['timeshift']) {
+                echo '<div class="notice notice-warning is-dismissible">
+                         <p>You are editing a historical version! if you save or publish, this will replace the current live one</p>
+                                  </div>';
+            }
+        });
     }
 
     public function checkTable($postType)
