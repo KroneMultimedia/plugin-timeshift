@@ -185,7 +185,6 @@ class Core
 
     public function pre_post_update(int $post_ID, array $data = null)
     {
-        header('X-XSS-Protection: 0');
         if (wp_is_post_autosave($post_ID)) {
             return;
         }
