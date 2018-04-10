@@ -14,9 +14,10 @@ class Core
     private $plugin_dir;
     private $timeshift_cached_meta;
 
-    public function __construct()
+    public function __construct($i18n)
     {
         global $wpdb;
+        $this->i18n = $i18n;
         $this->wpdb = $wpdb;
         $this->plugin_dir = plugin_dir_url(__FILE__) . '../';
         $this->add_filters();
@@ -66,10 +67,10 @@ class Core
         echo '<table class="widefat fixed">';
         echo '<thead>';
         echo '<tr>';
-        echo '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">Title</th>';
-        echo '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">Date</th>';
-        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">Author</th>';
-        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">Actions</th>';
+        echo '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
+        echo '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
+        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">'  . __('Author', 'kmm-timeshift') . '</th>';
+        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Actions', 'kmm-timeshift') . '</th>';
         echo '</tr>';
         echo ' </thead>';
         echo '<tbody>';
@@ -149,7 +150,7 @@ class Core
         add_action('admin_notices', function () {
             if (isset($_GET['timeshift']) && $_GET['timeshift']) {
                 echo '<div class="notice notice-warning is-dismissible">
-                         <p>You are editing a historical version! if you save or publish, this will replace the current live one</p>
+                         <p style="font-weight: 800; color: red">' .  __("You are editing a historical version! if you save or publish, this will replace the current live one", 'kmm-timeshift') . '</p>
                                   </div>';
             }
         });
