@@ -26,8 +26,10 @@ class Core
 
     public function hasTimeshifts($post_id)
     {
+
         $post_type = get_post_type($post_id);
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
+        $this->checkTable($post_type);
         $sql = "select count(1) as amount from $table_name where post_id=" . $post_id;
         $r = $this->wpdb->get_results($sql);
 
