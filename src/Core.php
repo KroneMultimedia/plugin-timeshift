@@ -189,6 +189,9 @@ class Core
         if (wp_is_post_autosave($post_ID)) {
             return;
         }
+        if (get_post_status($post_ID) == "auto-draft") {
+            return;
+        }
         $post_type = get_post_type($post_ID);
         $this->checkTable($post_type);
 
