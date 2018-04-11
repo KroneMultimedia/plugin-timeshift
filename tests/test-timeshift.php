@@ -90,6 +90,14 @@ class TestTimeshift extends \WP_UnitTestCase
     /**
     * @test
     */
+    public function timeshiftVisible() {
+        $r = $this->core->timeshiftVisible();
+        $this->assertTrue($r);
+    }
+
+    /**
+    * @test
+    */
     public function checkTable() {
         $post_id = $this->factory->post->create(['post_type' => "article"]);
         $post_type = get_post_type($post_id);
@@ -109,14 +117,6 @@ class TestTimeshift extends \WP_UnitTestCase
 
         $r = $this->core->checkTable($post_type);
 
-        $this->assertTrue($r);
-    }
-
-    /**
-    * @test
-    */
-    public function timeshiftVisible() {
-        $r = $this->core->timeshiftVisible();
         $this->assertTrue($r);
     }
 
