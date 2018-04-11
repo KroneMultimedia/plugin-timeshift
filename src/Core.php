@@ -63,6 +63,7 @@ class Core
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
         $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
 
+        $last_editor = get_post_meta($prod_post->ID, '_edit_last', true);
         $row = $this->wpdb->get_results($sql);
         echo '<table class="widefat fixed">';
         echo '<thead>';
@@ -76,10 +77,10 @@ class Core
         echo ' </thead>';
         echo '<tbody>';
         echo '<tr style="font-weight: 800;">';
-        echo '<td>' . get_avatar(get_post_meta($prod_post->ID, '_edit_last', true), 30) . '</td>';
+        echo '<td>' . get_avatar($last_editor, 30) . '</td>';
         echo '<td>' . $prod_post->post_title . '</td>';
         echo '<td>' . $prod_post->post_date . '</td>';
-        echo '<td>' . get_the_author_meta('display_name', get_post_meta($prod_post->ID, '_edit_last', true)) . '</td>';
+        echo '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
         echo "<td><a href='post.php?post=" . $_GET['post'] . "&action=edit'><span class='dashicons dashicons-admin-site'></span></A></td>";
         echo '</tr>';
 
@@ -218,6 +219,7 @@ class Core
         $post = get_post($post_ID);
 
         $mdata['_edit_last'][0] = $this->last_author;
+        unset($mdata['_edit_lock']);
 
         $timeshift = (object) ['post' => $post, 'meta' => $mdata];
         $this->storeTimeshift($timeshift);
