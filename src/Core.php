@@ -27,7 +27,6 @@ class Core
 
     public function hasTimeshifts($post_id)
     {
-
         $post_type = get_post_type($post_id);
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
         $this->checkTable($post_type);
@@ -43,9 +42,19 @@ class Core
         return false;
     }
 
+    public function timeshiftVisible()
+    {
+        $check = apply_filters('krn_timeshift_visible', true);
+
+        return $check;
+    }
+
     public function add_metabox()
     {
         $cl = $this;
+        if (! $this->timeshiftVisible()) {
+            return;
+        }
         if (! isset($_GET['post']) || ! $this->hasTimeshifts($_GET['post'])) {
             return;
         }
@@ -60,24 +69,28 @@ class Core
         if (! isset($_GET['post'])) {
             return;
         }
+        $prod_post = get_post($_GET['post']);
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
         $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
 
+        $last_editor = get_post_meta($prod_post->ID, '_edit_last', true);
         $row = $this->wpdb->get_results($sql);
         echo '<table class="widefat fixed">';
         echo '<thead>';
         echo '<tr>';
+        echo '<th width=30></th>';
         echo '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
         echo '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
-        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">'  . __('Author', 'kmm-timeshift') . '</th>';
+        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Author', 'kmm-timeshift') . '</th>';
         echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Actions', 'kmm-timeshift') . '</th>';
         echo '</tr>';
         echo ' </thead>';
         echo '<tbody>';
         echo '<tr style="font-weight: 800;">';
-        echo '<td>' . $post->post_title . '</td>';
-        echo '<td>' . $post->post_date . '</td>';
-        echo '<td>' . get_the_author_meta('display_name', $post->post_author) . '</td>';
+        echo '<td>' . get_avatar($last_editor, 30) . '</td>';
+        echo '<td>' . $prod_post->post_title . '</td>';
+        echo '<td>' . $prod_post->post_date . '</td>';
+        echo '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
         echo "<td><a href='post.php?post=" . $_GET['post'] . "&action=edit'><span class='dashicons dashicons-admin-site'></span></A></td>";
         echo '</tr>';
 
@@ -88,9 +101,10 @@ class Core
                 $style = 'style="font-style:italic;background-color: lightblue;"';
             }
             echo '<tr ' . $style . '>';
+            echo '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
             echo '<td>' . $timeshift->post->post_title . '</td>';
             echo '<td>' . $rev->create_date . '</td>';
-            echo '<td>' . get_the_author_meta('display_name', $timeshift->post->post_author) . '</td>';
+            echo '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
             echo "<td><a href='post.php?post=" . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . "'><span class='dashicons dashicons-backup'></span></a></td>";
             echo '</tr>';
         }
@@ -104,6 +118,17 @@ class Core
         //add_filter('wp_save_post_revision_post_has_changed', [$this, '_wp_check_revisioned_meta_fields_have_changed'], 10, 3);
 
         add_filter('get_post_metadata', [$this, 'inject_metadata_timeshift'], 1, 4);
+        add_filter('update_post_metadata', [$this, 'update_post_metadata'], 1, 5);
+    }
+
+    public function update_post_metadata($check, int $object_id, string $meta_key, $meta_value, $prev_value)
+    {
+        if ($meta_key == '_edit_last') {
+            $lo = get_post_meta($object_id, '_edit_last', true);
+            $this->last_author = $lo;
+        }
+
+        return null;
     }
 
     public function inject_metadata_timeshift($value, $post_id, $key, $single)
@@ -125,6 +150,11 @@ class Core
         if ($this->timeshift_cached_meta && isset($this->timeshift_cached_meta[$key])) {
             return $this->timeshift_cached_meta[$key];
         }
+        if ($single) {
+            return null;
+        }
+
+        return [];
     }
 
     public function inject_timeshift($p)
@@ -150,7 +180,7 @@ class Core
         add_action('admin_notices', function () {
             if (isset($_GET['timeshift']) && $_GET['timeshift']) {
                 echo '<div class="notice notice-warning is-dismissible">
-                         <p style="font-weight: 800; color: red">' .  __("You are editing a historical version! if you save or publish, this will replace the current live one", 'kmm-timeshift') . '</p>
+                         <p style="font-weight: 800; color: red">' . __('You are editing a historical version! if you save or publish, this will replace the current live one', 'kmm-timeshift') . '</p>
                                   </div>';
             }
         });
@@ -189,7 +219,7 @@ class Core
         if (wp_is_post_autosave($post_ID)) {
             return;
         }
-        if (get_post_status($post_ID) == "auto-draft") {
+        if (get_post_status($post_ID) == 'auto-draft') {
             return;
         }
         $post_type = get_post_type($post_ID);
@@ -197,6 +227,9 @@ class Core
 
         $mdata = get_metadata('post', $post_ID);
         $post = get_post($post_ID);
+
+        $mdata['_edit_last'][0] = $this->last_author;
+        unset($mdata['_edit_lock']);
 
         $timeshift = (object) ['post' => $post, 'meta' => $mdata];
         $this->storeTimeshift($timeshift);
