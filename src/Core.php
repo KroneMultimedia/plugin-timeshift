@@ -42,9 +42,19 @@ class Core
         return false;
     }
 
+    public function timeshiftVisible()
+    {
+        $check = apply_filters('krn_timeshift_visible', true);
+
+        return $check;
+    }
+
     public function add_metabox()
     {
         $cl = $this;
+        if (! $this->timeshiftVisible()) {
+            return;
+        }
         if (! isset($_GET['post']) || ! $this->hasTimeshifts($_GET['post'])) {
             return;
         }
