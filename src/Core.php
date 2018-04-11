@@ -12,6 +12,7 @@ namespace KMM\Timeshift;
 class Core
 {
     private $plugin_dir;
+    private $last_author = false;
     private $timeshift_cached_meta;
 
     public function __construct($i18n)
@@ -228,7 +229,9 @@ class Core
         $mdata = get_metadata('post', $post_ID);
         $post = get_post($post_ID);
 
-        $mdata['_edit_last'][0] = $this->last_author;
+        if ($this->last_author) {
+            $mdata['_edit_last'][0] = $this->last_author;
+        }
         unset($mdata['_edit_lock']);
 
         $timeshift = (object) ['post' => $post, 'meta' => $mdata];
