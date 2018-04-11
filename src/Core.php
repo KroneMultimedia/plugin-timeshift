@@ -61,7 +61,7 @@ class Core
             return;
         }
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
-        $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
+        $sql = "select * from $table_name where post_id=" . $post->ID . ' order by auto_save desc, create_date desc';
 
         $row = $this->wpdb->get_results($sql);
         echo '<table class="widefat fixed">';
@@ -83,15 +83,21 @@ class Core
 
         foreach ($row as $rev) {
             $timeshift = unserialize($rev->post_payload);
+            $auto_save = $rev->auto_save ? "auto-save" : "";
             $style = '';
-            if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id) {
-                $style = 'style="font-style:italic;background-color: lightblue;"';
+            //
+            if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id  || $rev->auto_save == 1) {
+                $color = "lightblue";
+                if($rev->auto_save == 1) {
+                  $color = "lightgoldenrodyellow";
+                }
+                $style = 'style="font-style:italic;background-color: ' . $color . ';"';
             }
             echo '<tr ' . $style . '>';
             echo '<td>' . $timeshift->post->post_title . '</td>';
             echo '<td>' . $rev->create_date . '</td>';
             echo '<td>' . get_the_author_meta('display_name', $timeshift->post->post_author) . '</td>';
-            echo "<td><a href='post.php?post=" . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . "'><span class='dashicons dashicons-backup'></span></a></td>";
+            echo "<td><a href='post.php?post=" . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . "'><span class='dashicons dashicons-backup'></span></a>" . $auto_save . "</td>";
             echo '</tr>';
         }
         echo '</tbody>';
@@ -145,6 +151,8 @@ class Core
 
     public function add_actions()
     {
+
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'), 10, 1);
         add_action('edit_form_top', [$this, 'inject_timeshift'], 1, 1);
         add_action('pre_post_update', [$this, 'pre_post_update'], 2, 1);
         add_action('admin_notices', function () {
@@ -156,6 +164,10 @@ class Core
         });
     }
 
+    public function enqueue_scripts() {
+      
+        wp_enqueue_script('timeshiftAutoSave', $this->plugin_dir . '/src/timeshiftAutosave.js', ["jquery"]);
+    }
     public function checkTable($postType)
     {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $postType;
@@ -166,7 +178,8 @@ class Core
 		              id int(12) NOT NULL AUTO_INCREMENT,
                   post_id int(12) NOT NULL,
 								  create_date datetime default CURRENT_TIMESTAMP,
-									post_payload TEXT
+                  post_payload TEXT,
+                  auto_save int(1)
 		              ,PRIMARY KEY  (id)
 	        ) $charset_collate;";
 
@@ -179,9 +192,30 @@ class Core
     public function storeTimeshift($timeshift)
     {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $timeshift->post->post_type;
-        $sql = "insert into $table_name (post_id, post_payload) VALUES(%d, '%s')";
-        $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
-        $this->wpdb->query($query);
+        if ($timeshift->auto_save) {
+            $sql = "select count(1) as amount from $table_name where post_id=%d and auto_save=1";
+            $query = $this->wpdb->prepare($sql, $timeshift->post->ID);
+            $r = $this->wpdb->get_results($query);
+
+            if ($r && count($r) == 1 && $r[0]->amount == 1) {
+                $sql = "update $table_name set post_payload='%s', create_date=now() where auto_save=1 and post_id=%d";
+                $query = $this->wpdb->prepare($sql, serialize($timeshift), $timeshift->post->ID);
+                $this->wpdb->query($query);
+            } else {
+                $sql = "insert into $table_name (post_id, post_payload, auto_save) VALUES(%d, '%s', 1)";
+                $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
+                $this->wpdb->query($query);
+            }
+        } else {
+            $sql = "insert into $table_name (post_id, post_payload, auto_save) VALUES(%d, '%s', 0)";
+            $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
+            $this->wpdb->query($query);
+
+            //Remove autosaves
+            $sql = "delete from $table_name where post_id=%d and auto_save = 1";
+            $query = $this->wpdb->prepare($sql, $timeshift->post->ID);
+            $this->wpdb->query($query);
+        }
     }
 
     public function pre_post_update(int $post_ID, array $data = null)
@@ -192,6 +226,7 @@ class Core
         if (get_post_status($post_ID) == "auto-draft") {
             return;
         }
+
         $post_type = get_post_type($post_ID);
         $this->checkTable($post_type);
 
@@ -199,6 +234,9 @@ class Core
         $post = get_post($post_ID);
 
         $timeshift = (object) ['post' => $post, 'meta' => $mdata];
+        if (isset($_GET['krn_autosave'])) {
+            $timeshift->auto_save = true;
+        }
         $this->storeTimeshift($timeshift);
     }
 }
