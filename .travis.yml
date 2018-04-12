@@ -27,6 +27,7 @@ script:
 
 before_deploy:
   - rm -vfr .git
+  - composer --no-dev --verbose --optimize-autoloader --prefer-dist install
 deploy:
   - provider: wordpress-plugin
     edge:
