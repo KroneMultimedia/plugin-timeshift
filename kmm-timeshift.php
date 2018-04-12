@@ -2,8 +2,8 @@
 /**
  * Plugin Name: KMM Timeshift
  * Description: This is a short description of what the plugin does.
- * Plugin URI:  http://gitlab.krone.at/WordPress/plugin-timeshift
- * Version:     1.0.0
+ * Plugin URI:  http://github.com/KroneMultiMedia/plugin-timeshift
+ * Version:     1.0.1
  * Author:      Krone.at
  * Author URI:  http://www.krone.at
  * Licence:     MIT
