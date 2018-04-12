@@ -56,7 +56,6 @@ class TestTimeshift extends \WP_UnitTestCase
         $this->core->wpdb = $mock;
 
         $r = $this->core->hasTimeshifts($post_id);
-
         $this->assertTrue($r);
     }
 
@@ -83,7 +82,6 @@ class TestTimeshift extends \WP_UnitTestCase
         $this->core->wpdb = $mock;
 
         $r = $this->core->hasTimeshifts($post_id);
-
         $this->assertFalse($r);
     }
 
@@ -116,8 +114,37 @@ class TestTimeshift extends \WP_UnitTestCase
         $this->core->wpdb = $mock;
 
         $r = $this->core->checkTable($post_type);
-
         $this->assertTrue($r);
+    }
+
+    /**
+    * @test
+    */
+    public function add_metabox_no_post() {
+        $r = $this->core->add_metabox();
+        $this->assertNull($r);
+    }
+
+    /**
+    * @test
+    */
+    public function timeshift_metabox_no_post() {
+        $r = $this->core->timeshift_metabox();
+        $this->assertNull($r);
+    }
+
+    /**
+    * @test
+    */
+    public function update_post_metadata() {
+        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post = get_post_type($post_id);
+        add_post_meta($post_id, '_edit_last', 'Author Name');
+
+        $lo = get_post_meta($post_id, '_edit_last', true);
+        $r = $this->core->update_post_metadata(true, $post_id, '_edit_last', '', '');
+        $this->assertEquals('Author Name', $lo);
+        $this->assertNull($r);
     }
 
     public function tearDown()
