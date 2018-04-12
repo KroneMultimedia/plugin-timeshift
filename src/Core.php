@@ -185,9 +185,8 @@ class Core
                                   </div>';
             }
         });
-                add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
+        add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
     }
-
 
     public function checkTable($postType)
     {
@@ -217,11 +216,11 @@ class Core
         $this->wpdb->query($query);
     }
 
-
     public function create_snapshot($postID)
     {
-            $this->pre_post_update($postID);
+        $this->pre_post_update($postID);
     }
+
     public function pre_post_update(int $post_ID, array $data = null)
     {
         if (wp_is_post_autosave($post_ID)) {
