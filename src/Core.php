@@ -185,6 +185,7 @@ class Core
                                   </div>';
             }
         });
+        add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
     }
 
     public function checkTable($postType)
@@ -213,6 +214,11 @@ class Core
         $sql = "insert into $table_name (post_id, post_payload) VALUES(%d, '%s')";
         $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
         $this->wpdb->query($query);
+    }
+
+    public function create_snapshot($postID)
+    {
+        $this->pre_post_update($postID);
     }
 
     public function pre_post_update(int $post_ID, array $data = null)
