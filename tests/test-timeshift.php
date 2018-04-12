@@ -221,8 +221,6 @@ class TestTimeshift extends \WP_UnitTestCase
         $timeshift = array('post' => $post);
         $timeshift = (object) $timeshift;
 
-        // var_dump($timeshift->post->ID); exit;
-
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
             ->setMethods(array( 'prepare', 'query' ))
@@ -242,6 +240,16 @@ class TestTimeshift extends \WP_UnitTestCase
         $this->core->wpdb = $mock;
 
         $this->core->storeTimeshift($timeshift);
+    }
+
+    /**
+    * @test
+    */
+    public function pre_post_update_auto_draft() {
+        $post_id = $this->factory->post->create(['post_type' => "article", 'post_status' => "auto_draft"]);
+
+        $r = $this->core->pre_post_update($post_id, null);
+        $this->assertNull($r);
     }
 
     public function tearDown()
