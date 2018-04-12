@@ -25,7 +25,8 @@ install:
 script:
   -  vendor/phpunit/phpunit/phpunit -v
 
-
+before_deploy:
+  - rm -vfr .git
 deploy:
   - provider: wordpress-plugin
     edge:
