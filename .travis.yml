@@ -20,12 +20,12 @@ cache:
   directories:
     - $HOME/.composer/cache/files
 
-before_install:
-  - phpenv config-rm xdebug.ini
-  - composer self-update
-  - composer global require hirak/prestissimo
-  - bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 latest
-  - travis_retry travis_wait composer install --no-interaction 
+#before_install:
+#  - phpenv config-rm xdebug.ini
+#  - composer self-update
+#  - composer global require hirak/prestissimo
+#  - bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 latest
+#  - travis_retry travis_wait composer install --no-interaction 
 
 
 
@@ -40,6 +40,8 @@ jobs:
     - stage: test
       script:
         -  vendor/phpunit/phpunit/phpunit -v
+
+
     - stage: style
       script: 
         - composer cs-check
@@ -50,6 +52,7 @@ jobs:
         - phpdbg -qrr vendor/bin/phpunit --coverage-clover clover.xml
       after_success:
         - vendor/bin/ocular code-coverage:upload --format=php-clover clover.xml --revision=$TRAVIS_COMMIT
+
     - stage: deploy
       script: skip
       deploy:
