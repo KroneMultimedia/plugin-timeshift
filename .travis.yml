@@ -32,6 +32,10 @@ before_deploy:
   - rm -vfr .git
   - composer --no-dev --verbose --optimize-autoloader --prefer-dist install
 
+# travis launches phpunit itself in the testing stage according to php setups
+# test stage script
+script:
+  - vendor/phpunit/phpunit/phpunit -v --colors=always
 
 
 jobs:
