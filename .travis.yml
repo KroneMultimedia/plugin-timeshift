@@ -37,9 +37,9 @@ before_deploy:
 
 jobs:
   include:
-    - stage: test
-      script:
-        -  vendor/phpunit/phpunit/phpunit -v
+#    - stage: test
+#      script:
+#        -  vendor/phpunit/phpunit/phpunit -v
 
 
     - stage: style
