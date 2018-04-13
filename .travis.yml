@@ -36,9 +36,6 @@ before_deploy:
 
 jobs:
   include:
-    - stage: test
-      script:
-        -  vendor/phpunit/phpunit/phpunit -v --colors=always
     - stage: style
       script: 
         - composer cs-check
