@@ -28,7 +28,7 @@ before_install:
   - travis_retry travis_wait composer install --no-interaction 
 
 script:
-  -  vendor/phpunit/phpunit/phpunit -v
+  -  vendor/phpunit/phpunit/phpunit -v --colors=always
 
 before_deploy:
   - rm -vfr .git
