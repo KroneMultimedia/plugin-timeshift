@@ -8,10 +8,10 @@ stages:
   - coverage
   - deploy
 
-matrix:
-  - include:
-    - php: 7.1
-    - php: 7.2
+
+php:
+  - 7.1
+  - 7.2
 
 services:
   - mysql
@@ -25,8 +25,6 @@ before_install:
   - composer self-update
   - composer global require hirak/prestissimo
   - bin/install-wp-tests.sh wordpress_test root '' 127.0.0.1 latest
-
-install: 
   - travis_retry travis_wait composer install --no-interaction 
 
 
