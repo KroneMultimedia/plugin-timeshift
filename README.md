@@ -1,23 +1,34 @@
-# KMM timeshift for WordPress
+# Timeshift
 
-replace wordpress own revision system, with a system called timeshift.
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/badges/quality-score.png?b=beta)](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/badges/coverage.png?b=beta)](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/?branch=beta) [![Build Status](https://travis-ci.org/KroneMultimedia/plugin-timeshift.svg?branch=master)](https://travis-ci.org/KroneMultimedia/plugin-timeshift)
 
-  - saves every version of every post in own table e.g: `wp_timeshift_article`
-  - lets you open, edit versions without immediate save
-  - includes post meta, and also works with e.g: ACF
+
+
+
+Large Scale Revision System for WordPress, that also supports postmeta and ACF custom fields.
+
+
+
+|         | Features  |
+----------|-----------|
+| :innocent:   | Configuration works out of the box  for all post types |
+| :sweat_smile:| Works even on large scale setups, revisions are stored in own table, only one record per revision |
+| :thumbsup:   | Includes postmeta and custom fields |
+| :crown: | Supported and battle tested @krone.at |
+| :octocat: | 100% free and open source |
+
   
   
-  
+# Screenshots
 
-[![Screenshot](https://raw.githubusercontent.com/KroneMultimedia/plugin-timeshift/beta/screen.png?asdasdasdasd)
-
-
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/badges/quality-score.png?b=beta)](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/?branch=master)
-
-[![Code Coverage](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/badges/coverage.png?b=beta)](https://scrutinizer-ci.com/g/KroneMultimedia/plugin-timeshift/?branch=beta)
-
-[![Build Status](https://travis-ci.org/KroneMultimedia/plugin-timeshift.svg?branch=master)](https://travis-ci.org/KroneMultimedia/plugin-timeshift)
+## Meta Box - on post edit
+![screenshot1](assets/screenshot-1.png)
 
 
+## Old Version selected
+![screenshot2](assets/screenshot-2.png)
+
+## Top Notice
+![screenshot3](assets/screenshot-3.png)
 
 

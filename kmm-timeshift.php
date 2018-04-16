@@ -3,7 +3,7 @@
  * Plugin Name: KMM Timeshift
  * Description: This is a short description of what the plugin does.
  * Plugin URI:  http://github.com/KroneMultiMedia/plugin-timeshift
- * Version:     1.0.2
+ * Version:     %TRAVIS_TAG%
  * Author:      Krone.at
  * Author URI:  http://www.krone.at
  * Licence:     MIT
