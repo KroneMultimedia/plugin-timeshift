@@ -24,6 +24,8 @@ class Core
         $this->add_filters();
         $this->add_actions();
         $this->add_metabox();
+        //Disable WP's own revision system
+        remove_post_type_support('post', 'revisions');
     }
 
     public function hasTimeshifts($post_id)
