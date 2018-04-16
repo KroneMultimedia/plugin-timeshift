@@ -2,6 +2,8 @@
 stages:
 - tests
 - release_publish
+- wordpress.org
+- github.com
 
 Unit Test:
   dependencies: []
@@ -74,11 +76,41 @@ release:publish:
   - fastlane publish_release
   tags:
   - docker
+  artifacts:
+    paths:
+      - latest_release.txt 
   only:
   - release
   - fastlane
   - beta
   - master
+
+svn update:
+  image: gitlab.krone.at:5000/krn/backend:beta
+  dependencies: ["release:publish"]
+  stage: wordpress.org
+  script:
+  - bin/deploy-to-wp.sh $(cat latest_release.txt) kmm-timeshift
+  tags:
+  - docker
+  only:
+  - master
+
+github update:
+  image: gitlab.krone.at:5000/krn/backend:beta
+  dependencies: ["release:publish"]
+  stage: github.com
+  script:
+  - git remote add github git@github.com:KroneMultimedia/plugin-timeshift
+  - git push github --tags
+  - git push github --all
+  tags:
+  - docker
+  only:
+  - master
+
+
+
 before_script:
 - eval $(ssh-agent -s)
 - ssh-add <(echo "$SSH_DEPLOY_KEY")
