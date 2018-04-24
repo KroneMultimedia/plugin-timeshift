@@ -76,7 +76,8 @@ class Core
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
         $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
 
-        $sql_last_editor = "select meta_value from wp_postmeta where post_id=" . $post->ID . " AND meta_key='_edit_last'";
+        $table_postmeta = $this->wpdb->prefix . 'postmeta';
+        $sql_last_editor = "select meta_value from " . $table_postmeta . " where post_id=" . $post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
 
         $row = $this->wpdb->get_results($sql);
