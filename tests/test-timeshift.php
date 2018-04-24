@@ -122,7 +122,7 @@ class TestTimeshift extends \WP_UnitTestCase
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'get_results' ))
+            ->setMethods(array( 'get_results', 'get_var' ))
             ->getMock();
 
         $mock->prefix = "wptest";
