@@ -76,9 +76,7 @@ class Core
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
         $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
 
-        $sql_last_editor = "select meta_value from wp_postmeta where post_id=" . $post->ID . " AND meta_key='_edit_last'";
-        $last_editor = $this->wpdb->get_var($sql_last_editor);
-
+        $last_editor = get_post_meta($prod_post->ID, '_edit_last', true);
         $row = $this->wpdb->get_results($sql);
         echo '<table class="widefat fixed">';
         echo '<thead>';
