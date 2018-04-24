@@ -133,6 +133,13 @@ class TestTimeshift extends \WP_UnitTestCase
             ->with("select * from $table_name where post_id=" . $post->ID . ' order by create_date desc')
             ->willReturn($obj);
 
+        //Expect query sent
+        $table_name = 'wptestpostmeta';
+        $mock->expects($this->once())
+            ->method('get_var')
+            ->with("select meta_value from " . $table_name . " where post_id=" . $post->ID . " AND meta_key='_edit_last'")
+            ->willReturn($obj);
+
         $this->core->wpdb = $mock;
 
         $this->core->timeshift_metabox();
