@@ -122,7 +122,7 @@ class TestTimeshift extends \WP_UnitTestCase
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'get_results' ))
+            ->setMethods(array( 'get_results', 'get_var' ))
             ->getMock();
 
         $mock->prefix = "wptest";
@@ -131,6 +131,13 @@ class TestTimeshift extends \WP_UnitTestCase
         $mock->expects($this->once())
             ->method('get_results')
             ->with("select * from $table_name where post_id=" . $post->ID . ' order by create_date desc')
+            ->willReturn($obj);
+
+        //Expect query sent
+        $table_name = 'wptestpostmeta';
+        $mock->expects($this->once())
+            ->method('get_var')
+            ->with("select meta_value from " . $table_name . " where post_id=" . $post->ID . " AND meta_key='_edit_last'")
             ->willReturn($obj);
 
         $this->core->wpdb = $mock;
