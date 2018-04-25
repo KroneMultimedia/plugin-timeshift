@@ -95,7 +95,7 @@ class Core
         echo '<tr style="font-weight: 800;">';
         echo '<td>' . get_avatar($last_editor, 30) . '</td>';
         echo '<td>' . $prod_post->post_title . '</td>';
-        echo '<td>' . $prod_post->post_date . '</td>';
+        echo '<td>' . $prod_post->post_modified . '</td>';
         echo '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
         echo "<td><a href='post.php?post=" . $_GET['post'] . "&action=edit'><span class='dashicons dashicons-admin-site'></span></A></td>";
         echo '</tr>';
@@ -109,7 +109,7 @@ class Core
             echo '<tr ' . $style . '>';
             echo '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
             echo '<td>' . $timeshift->post->post_title . '</td>';
-            echo '<td>' . $rev->create_date . '</td>';
+            echo '<td>' . $timeshift->post->post_modified . '</td>';
             echo '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
             echo "<td><a href='post.php?post=" . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . "'><span class='dashicons dashicons-backup'></span></a></td>";
             echo '</tr>';
