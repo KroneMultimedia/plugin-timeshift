@@ -153,14 +153,13 @@ class Core
                 $this->timeshift_cached_meta = $payload->meta;
             }
         }
+        //is the requested meta data in the stored snapshot
         if ($this->timeshift_cached_meta && isset($this->timeshift_cached_meta[$key])) {
             return $this->timeshift_cached_meta[$key];
+        } else {
+            //Otherwise return default value, like acf core fields.
+            return $value;
         }
-        if ($single) {
-            return null;
-        }
-
-        return [];
     }
 
     public function inject_timeshift($p)
