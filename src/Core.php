@@ -106,6 +106,9 @@ class Core
             if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id) {
                 $style = 'style="font-style:italic;background-color: lightblue;"';
             }
+            if(!isset($timeshift->meta['_edit_last']) || is_null($timeshift->meta['_edit_last'])) {
+                $timeshift->meta['_edit_last'] = 0; // some images dont have _edit_last field
+            }
             echo '<tr ' . $style . '>';
             echo '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
             echo '<td>' . $timeshift->post->post_title . '</td>';
