@@ -77,7 +77,7 @@ class Core
         $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
 
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
-        $sql_last_editor = "select meta_value from " . $table_postmeta . " where post_id=" . $post->ID . " AND meta_key='_edit_last'";
+        $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
 
         $row = $this->wpdb->get_results($sql);
@@ -106,7 +106,7 @@ class Core
             if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id) {
                 $style = 'style="font-style:italic;background-color: lightblue;"';
             }
-            if(!isset($timeshift->meta['_edit_last']) || is_null($timeshift->meta['_edit_last'])) {
+            if (! isset($timeshift->meta['_edit_last']) || is_null($timeshift->meta['_edit_last'])) {
                 $timeshift->meta['_edit_last'] = 0; // some images dont have _edit_last field
             }
             echo '<tr ' . $style . '>';
