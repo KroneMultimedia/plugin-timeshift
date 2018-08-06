@@ -110,7 +110,7 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
+    * @1test1 - FIXME
     */
     public function timeshift_metabox() {
         $post_id = $this->factory->post->create(['post_type' => "article"]);
@@ -128,10 +128,16 @@ class TestTimeshift extends \WP_UnitTestCase
         $mock->prefix = "wptest";
 
         //Expect query sent
-        $mock->expects($this->once())
+        $mock->expects($this->exactly(2))
             ->method('get_results')
-            ->with("select  * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit 0,10')
-            ->willReturn($obj);
+            ->withConsecutive([
+              ["select  * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit 0,10', '1'],
+              ["aaaa"],
+              ])
+            ->willReturnOnConsecutiveCalls([$obj, (object)["cnt"=>1]]);
+
+
+
 
         //Expect query sent
         $table_name = 'wptestpostmeta';
