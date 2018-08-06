@@ -72,15 +72,38 @@ class Core
         if (! isset($_GET['post'])) {
             return;
         }
+
+        if (! isset($_GET['timeshift_paged'])) {
+            $_GET['timeshift_paged'] = 1;
+        }
+        $start = ($_GET['timeshift_paged'] - 1) * 10;
+
         $prod_post = get_post($_GET['post']);
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
-        $sql = "select * from $table_name where post_id=" . $post->ID . ' order by create_date desc';
+        $sql = "select  * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit ' . $start . ',10';
 
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
 
         $row = $this->wpdb->get_results($sql);
+
+        $sqlcount = "select  count(1) as cnt from $table_name where post_id=" . $post->ID;
+        $maxrows = $this->wpdb->get_results($sqlcount);
+        $allrows = (int)$maxrows[0]->{'cnt'};
+        $big = 9999;
+        $paged = $_GET['timeshift_paged'];
+        $max_page = ceil($allrows / 10);
+        echo paginate_links([
+                        'base' => 'post.php%_%',
+            'format' => '?timeshift_paged=%#%',
+            'current' => max(1, $paged),
+            'total' => $max_page,
+            'mid_size' => 1,
+            'prev_text' => __('«'),
+            'next_text' => __('»'),
+            //'type'       => 'list'
+                ]);
         echo '<table class="widefat fixed">';
         echo '<thead>';
         echo '<tr>';
