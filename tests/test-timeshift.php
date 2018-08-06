@@ -130,7 +130,7 @@ class TestTimeshift extends \WP_UnitTestCase
         //Expect query sent
         $mock->expects($this->once())
             ->method('get_results')
-            ->with("select * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit 0,10')
+            ->with("select  * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit 0,10')
             ->willReturn($obj);
 
         //Expect query sent
