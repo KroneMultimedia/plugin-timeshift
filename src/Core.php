@@ -22,6 +22,7 @@ class Core
         $this->wpdb = $wpdb;
         $this->plugin_dir = plugin_dir_url(__FILE__) . '../';
         $this->timeshift_posts_per_page = 5;
+        $this->pagination_ajax_action = 'pagination_timeshift';
         $this->add_filters();
         $this->add_actions();
         $this->add_metabox();
@@ -73,14 +74,26 @@ class Core
         }
         $prod_post = get_post($_GET['post']);
 
+        $start = 0;
+        $timeshift_page = 1;
+        if(isset($_GET['timeshift_page'])) {
+            $start = ($_GET['timeshift_page'] - 1) * $this->timeshift_posts_per_page;
+            $timeshift_page = $_GET['timeshift_page'];
+        }
+
+
         // pagination
-        $pagination = $this->get_paginated_links($prod_post);
+        $pagination = $this->get_paginated_links($prod_post, $timeshift_page);
         echo $pagination;
 
         // load first few & render
-        $rows = $this->get_next_rows($prod_post);
+        $rows = $this->get_next_rows($prod_post, $start);
         $timeshift_table = $this->render_metabox_table($prod_post, $rows);
         echo $timeshift_table;
+
+        if(isset($_GET['action']) && $_GET['action'] == $this->pagination_ajax_action) {
+            wp_die();
+        }
     }
 
     public function add_filters()
@@ -150,6 +163,7 @@ class Core
         add_action('admin_notices', [$this, 'admin_notice']);
         add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
+        add_action('wp_ajax_pagination_timeshift', [$this, 'timeshift_metabox']);
     }
 
     public function admin_notice()
@@ -165,7 +179,7 @@ class Core
     {
         wp_enqueue_script('krn-timeshift-pagination-ajax', plugin_dir_url( __FILE__ ) . '../assets/js/pagination-ajax.js', ['jquery']);
         wp_localize_script('krn-timeshift-pagination-ajax', 'krn_timeshift', array(
-            'pagination_ajax_php' => plugin_dir_url( __FILE__ ) . 'pagination.php',
+            'action' => $this->pagination_ajax_action,
             'post' => isset($_GET['post']) ? $_GET['post'] : false,
             'timeshift' => isset($_GET['timeshift']) ? $_GET['timeshift'] : false
         ));

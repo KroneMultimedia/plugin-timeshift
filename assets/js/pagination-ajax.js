@@ -19,7 +19,7 @@ jQuery(document).ready(function() {
 
         krn_timeshift.timeshift_page = timeshift_page;
 
-        jQuery.get(krn_timeshift.pagination_ajax_php, krn_timeshift, function(response) {
+        jQuery.get(ajaxurl, krn_timeshift, function(response) {
             jQuery('#krn-timeshift .inside').html(response);
         }, 'html');
     });
