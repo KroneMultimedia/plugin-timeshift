@@ -21,10 +21,12 @@ class Core
         $this->i18n = $i18n;
         $this->wpdb = $wpdb;
         $this->plugin_dir = plugin_dir_url(__FILE__) . '../';
+        $this->timeshift_posts_per_page = 5;
+        $this->pagination_ajax_action = 'pagination_timeshift';
         $this->add_filters();
         $this->add_actions();
         $this->add_metabox();
-        //Disable WP's own revision system
+        // Disable WP's own revision system
         remove_post_type_support('post', 'revisions');
     }
 
@@ -48,7 +50,6 @@ class Core
     public function timeshiftVisible()
     {
         $check = apply_filters('krn_timeshift_visible', true);
-
         return $check;
     }
 
@@ -68,80 +69,31 @@ class Core
 
     public function timeshift_metabox()
     {
-        global $post;
         if (! isset($_GET['post'])) {
             return;
         }
-
-        if (! isset($_GET['timeshift_paged'])) {
-            $_GET['timeshift_paged'] = 1;
-        }
-        $start = ($_GET['timeshift_paged'] - 1) * 10;
-
         $prod_post = get_post($_GET['post']);
-        $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
-        $sql = "select  * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit ' . $start . ',10';
 
-        $table_postmeta = $this->wpdb->prefix . 'postmeta';
-        $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $post->ID . " AND meta_key='_edit_last'";
-        $last_editor = $this->wpdb->get_var($sql_last_editor);
-
-        $row = $this->wpdb->get_results($sql);
-
-        $sqlcount = "select  count(1) as cnt from $table_name where post_id=" . $post->ID;
-        $maxrows = $this->wpdb->get_results($sqlcount);
-        $allrows = (int)$maxrows[0]->{'cnt'};
-        $big = 9999;
-        $paged = $_GET['timeshift_paged'];
-        $max_page = ceil($allrows / 10);
-        echo paginate_links([
-                        'base' => 'post.php%_%',
-            'format' => '?timeshift_paged=%#%',
-            'current' => max(1, $paged),
-            'total' => $max_page,
-            'mid_size' => 1,
-            'prev_text' => __('«'),
-            'next_text' => __('»'),
-            //'type'       => 'list'
-                ]);
-        echo '<table class="widefat fixed">';
-        echo '<thead>';
-        echo '<tr>';
-        echo '<th width=30></th>';
-        echo '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
-        echo '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
-        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Author', 'kmm-timeshift') . '</th>';
-        echo '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Actions', 'kmm-timeshift') . '</th>';
-        echo '</tr>';
-        echo ' </thead>';
-        echo '<tbody>';
-        echo '<tr style="font-weight: 800;">';
-        echo '<td>' . get_avatar($last_editor, 30) . '</td>';
-        echo '<td>' . $prod_post->post_title . '</td>';
-        echo '<td>' . $prod_post->post_modified . '</td>';
-        echo '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
-        echo "<td><a href='post.php?post=" . $_GET['post'] . "&action=edit'><span class='dashicons dashicons-admin-site'></span></A></td>";
-        echo '</tr>';
-
-        foreach ($row as $rev) {
-            $timeshift = unserialize($rev->post_payload);
-            $style = '';
-            if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id) {
-                $style = 'style="font-style:italic;background-color: lightblue;"';
-            }
-            if (! isset($timeshift->meta['_edit_last']) || is_null($timeshift->meta['_edit_last'])) {
-                $timeshift->meta['_edit_last'] = 0; // some images dont have _edit_last field
-            }
-            echo '<tr ' . $style . '>';
-            echo '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
-            echo '<td>' . $timeshift->post->post_title . '</td>';
-            echo '<td>' . $timeshift->post->post_modified . '</td>';
-            echo '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
-            echo "<td><a href='post.php?post=" . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . "'><span class='dashicons dashicons-backup'></span></a></td>";
-            echo '</tr>';
+        $start = 0;
+        $timeshift_page = 1;
+        if(isset($_GET['timeshift_page'])) {
+            $start = ($_GET['timeshift_page'] - 1) * $this->timeshift_posts_per_page;
+            $timeshift_page = $_GET['timeshift_page'];
         }
-        echo '</tbody>';
-        echo '</table>';
+
+
+        // pagination
+        $pagination = $this->get_paginated_links($prod_post, $timeshift_page);
+        echo $pagination;
+
+        // load first few & render
+        $rows = $this->get_next_rows($prod_post, $start);
+        $timeshift_table = $this->render_metabox_table($prod_post, $rows);
+        echo $timeshift_table;
+
+        if(isset($_GET['action']) && $_GET['action'] == $this->pagination_ajax_action) {
+            wp_die();
+        }
     }
 
     public function add_filters()
@@ -168,7 +120,7 @@ class Core
         if (! isset($_GET['timeshift'])) {
             return;
         }
-        //Load timeshift
+        // Load timeshift
         if (! $this->timeshift_cached_meta) {
             $post_type = get_post_type($post_id);
             $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
@@ -179,11 +131,11 @@ class Core
                 $this->timeshift_cached_meta = $payload->meta;
             }
         }
-        //is the requested meta data in the stored snapshot
+        // is the requested meta data in the stored snapshot
         if ($this->timeshift_cached_meta && isset($this->timeshift_cached_meta[$key])) {
             return $this->timeshift_cached_meta[$key];
         } else {
-            //Otherwise return default value, like acf core fields.
+            // Otherwise return default value, like acf core fields.
             return $value;
         }
     }
@@ -194,7 +146,7 @@ class Core
         if (! isset($_GET['timeshift'])) {
             return;
         }
-        //Load timeshift
+        // Load timeshift
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
         $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
         $r = $this->wpdb->get_results($sql);
@@ -208,14 +160,29 @@ class Core
     {
         add_action('edit_form_top', [$this, 'inject_timeshift'], 1, 1);
         add_action('pre_post_update', [$this, 'pre_post_update'], 2, 1);
-        add_action('admin_notices', function () {
-            if (isset($_GET['timeshift']) && $_GET['timeshift']) {
-                echo '<div class="notice notice-warning is-dismissible">
-                         <p style="font-weight: 800; color: red">' . __('You are editing a historical version! if you save or publish, this will replace the current live one', 'kmm-timeshift') . '</p>
-                                  </div>';
-            }
-        });
+        add_action('admin_notices', [$this, 'admin_notice']);
         add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
+        add_action('wp_ajax_pagination_timeshift', [$this, 'timeshift_metabox']);
+    }
+
+    public function admin_notice()
+    {
+        if (isset($_GET['timeshift']) && $_GET['timeshift']) {
+            echo '<div class="notice notice-warning is-dismissible">';
+            echo '<p style="font-weight: 800; color: red">' . __('You are editing a historical version! if you save or publish, this will replace the current live one', 'kmm-timeshift') . '</p>';
+            echo '</div>';
+        }
+    }
+
+    public function enqueue_scripts()
+    {
+        wp_enqueue_script('krn-timeshift-pagination-ajax', plugin_dir_url( __FILE__ ) . '../assets/js/pagination-ajax.js', ['jquery']);
+        wp_localize_script('krn-timeshift-pagination-ajax', 'krn_timeshift', array(
+            'action' => $this->pagination_ajax_action,
+            'post' => isset($_GET['post']) ? $_GET['post'] : false,
+            'timeshift' => isset($_GET['timeshift']) ? $_GET['timeshift'] : false
+        ));
     }
 
     public function checkTable($postType)
@@ -225,12 +192,12 @@ class Core
         $charset_collate = $this->wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-		              id int(12) NOT NULL AUTO_INCREMENT,
-                  post_id int(12) NOT NULL,
-								  create_date datetime default CURRENT_TIMESTAMP,
-									post_payload TEXT
-		              ,PRIMARY KEY  (id)
-	        ) $charset_collate;";
+                id int(12) NOT NULL AUTO_INCREMENT,
+                post_id int(12) NOT NULL,
+                create_date datetime default CURRENT_TIMESTAMP,
+                post_payload TEXT,
+                PRIMARY KEY (id)
+            ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         $a = dbDelta($sql);
@@ -272,5 +239,106 @@ class Core
 
         $timeshift = (object) ['post' => $post, 'meta' => $mdata];
         $this->storeTimeshift($timeshift);
+    }
+
+    public function get_paginated_links($prod_post, $paged = 1)
+    {
+        if (is_null($prod_post)) {
+            return;
+        }
+
+        // count timeshift-versions
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
+        $sql = "select  count(1) as cnt from $table_name where post_id=" . $prod_post->ID;
+        $maxrows = $this->wpdb->get_results($sql);
+        $allrows = (int)$maxrows[0]->{'cnt'};
+
+        // max. number of pages
+        $max_page = ceil($allrows / $this->timeshift_posts_per_page);
+
+        // create pagination links
+        $output = paginate_links([
+            'current' => max(1, $paged),
+            'total' => $max_page,
+            'mid_size' => 1,
+            'prev_text' => __('«'),
+            'next_text' => __('»'),
+        ]);
+
+        return $output;
+    }
+
+    public function get_next_rows($prod_post, $start = 0)
+    {
+        if (! isset($prod_post)) {
+            return;
+        }
+
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
+        $sql = "select  * from $table_name where post_id=" . $prod_post->ID . ' order by create_date desc limit ' . $start . ', ' . $this->timeshift_posts_per_page;
+        $rows = $this->wpdb->get_results($sql);
+
+        return $rows;
+    }
+
+    public function render_metabox_table($prod_post, $rows = [])
+    {
+        if (! isset($prod_post)) {
+            return;
+        }
+
+        // get last editor
+        $table_postmeta = $this->wpdb->prefix . 'postmeta';
+        $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
+        $last_editor = $this->wpdb->get_var($sql_last_editor);
+
+        $output =  '<table class="widefat fixed">';
+        $output .= '<thead>';
+        $output .= '<tr>';
+        $output .= '<th width=30></th>';
+        $output .= '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Author', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Actions', 'kmm-timeshift') . '</th>';
+        $output .= '</tr>';
+        $output .= '</thead>';
+        $output .= '<tbody>';
+
+        // live-version
+        $output .= '<tr style="font-weight: 800;">';
+        $output .= '<td>' . get_avatar($last_editor, 30) . '</td>';
+        $output .= '<td>' . $prod_post->post_title . '</td>';
+        $output .= '<td>' . $prod_post->post_modified . '</td>';
+        $output .= '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
+        $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
+        $output .= '</tr>';
+
+        foreach ($rows as $rev) {
+            $timeshift = unserialize($rev->post_payload);
+            $style = '';
+
+            // highlight currently loaded version
+            if (isset($_GET['timeshift']) && $_GET['timeshift'] == $rev->id) {
+                $style = 'style="font-style:italic;background-color: lightblue;"';
+            }
+
+            // some images dont have _edit_last field
+            if (! isset($timeshift->meta['_edit_last']) || is_null($timeshift->meta['_edit_last'])) {
+                $timeshift->meta['_edit_last'] = 0;
+            }
+
+            $output .=  '<tr ' . $style . '>';
+            $output .=  '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
+            $output .=  '<td>' . $timeshift->post->post_title . '</td>';
+            $output .=  '<td>' . $timeshift->post->post_modified . '</td>';
+            $output .=  '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
+            $output .=  '<td><a href="post.php?post=' . $_GET['post'] . "&action=edit&timeshift=" . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
+            $output .=  '</tr>';
+        }
+
+        $output .=  '</tbody>';
+        $output .=  '</table>';
+
+        return $output;
     }
 }
