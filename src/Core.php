@@ -50,6 +50,7 @@ class Core
     public function timeshiftVisible()
     {
         $check = apply_filters('krn_timeshift_visible', true);
+
         return $check;
     }
 
@@ -76,11 +77,10 @@ class Core
 
         $start = 0;
         $timeshift_page = 1;
-        if(isset($_GET['timeshift_page'])) {
+        if (isset($_GET['timeshift_page'])) {
             $start = ($_GET['timeshift_page'] - 1) * $this->timeshift_posts_per_page;
             $timeshift_page = $_GET['timeshift_page'];
         }
-
 
         // pagination
         $pagination = $this->get_paginated_links($prod_post, $timeshift_page);
@@ -91,7 +91,7 @@ class Core
         $timeshift_table = $this->render_metabox_table($prod_post, $rows);
         echo $timeshift_table;
 
-        if(isset($_GET['action']) && $_GET['action'] == $this->pagination_ajax_action) {
+        if (isset($_GET['action']) && $_GET['action'] == $this->pagination_ajax_action) {
             wp_die();
         }
     }
@@ -177,12 +177,12 @@ class Core
 
     public function enqueue_scripts()
     {
-        wp_enqueue_script('krn-timeshift-pagination-ajax', plugin_dir_url( __FILE__ ) . '../assets/js/pagination-ajax.js', ['jquery']);
-        wp_localize_script('krn-timeshift-pagination-ajax', 'krn_timeshift', array(
+        wp_enqueue_script('krn-timeshift-pagination-ajax', plugin_dir_url(__FILE__) . '../assets/js/pagination-ajax.js', ['jquery']);
+        wp_localize_script('krn-timeshift-pagination-ajax', 'krn_timeshift', [
             'action' => $this->pagination_ajax_action,
             'post' => isset($_GET['post']) ? $_GET['post'] : false,
-            'timeshift' => isset($_GET['timeshift']) ? $_GET['timeshift'] : false
-        ));
+            'timeshift' => isset($_GET['timeshift']) ? $_GET['timeshift'] : false,
+        ]);
     }
 
     public function checkTable($postType)
@@ -292,7 +292,7 @@ class Core
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
 
-        $output =  '<table class="widefat fixed">';
+        $output = '<table class="widefat fixed">';
         $output .= '<thead>';
         $output .= '<tr>';
         $output .= '<th width=30></th>';
@@ -327,17 +327,17 @@ class Core
                 $timeshift->meta['_edit_last'] = 0;
             }
 
-            $output .=  '<tr ' . $style . '>';
-            $output .=  '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
-            $output .=  '<td>' . $timeshift->post->post_title . '</td>';
-            $output .=  '<td>' . $timeshift->post->post_modified . '</td>';
-            $output .=  '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
-            $output .=  '<td><a href="post.php?post=' . $_GET['post'] . "&action=edit&timeshift=" . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
-            $output .=  '</tr>';
+            $output .= '<tr ' . $style . '>';
+            $output .= '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
+            $output .= '<td>' . $timeshift->post->post_title . '</td>';
+            $output .= '<td>' . $timeshift->post->post_modified . '</td>';
+            $output .= '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
+            $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
+            $output .= '</tr>';
         }
 
-        $output .=  '</tbody>';
-        $output .=  '</table>';
+        $output .= '</tbody>';
+        $output .= '</table>';
 
         return $output;
     }
