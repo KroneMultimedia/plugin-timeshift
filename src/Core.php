@@ -9,14 +9,12 @@
 
 namespace KMM\Timeshift;
 
-class Core
-{
+class Core {
     private $plugin_dir;
     private $last_author = false;
     private $timeshift_cached_meta;
 
-    public function __construct($i18n)
-    {
+    public function __construct($i18n) {
         global $wpdb;
         $this->i18n = $i18n;
         $this->wpdb = $wpdb;
@@ -30,15 +28,14 @@ class Core
         remove_post_type_support('post', 'revisions');
     }
 
-    public function hasTimeshifts($post_id)
-    {
+    public function hasTimeshifts($post_id) {
         $post_type = get_post_type($post_id);
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
         $this->checkTable($post_type);
         $sql = "select count(1) as amount from $table_name where post_id=" . $post_id;
         $r = $this->wpdb->get_results($sql);
 
-        if ($r && count($r) == 1) {
+        if ($r && 1 == count($r)) {
             if (intval($r[0]->amount) > 0) {
                 return true;
             }
@@ -47,15 +44,13 @@ class Core
         return false;
     }
 
-    public function timeshiftVisible()
-    {
+    public function timeshiftVisible() {
         $check = apply_filters('krn_timeshift_visible', true);
 
         return $check;
     }
 
-    public function add_metabox()
-    {
+    public function add_metabox() {
         $cl = $this;
         if (! $this->timeshiftVisible()) {
             return;
@@ -68,8 +63,7 @@ class Core
         });
     }
 
-    public function timeshift_metabox()
-    {
+    public function timeshift_metabox() {
         if (! isset($_GET['post'])) {
             return;
         }
@@ -96,8 +90,7 @@ class Core
         }
     }
 
-    public function add_filters()
-    {
+    public function add_filters() {
         // When revisioned post meta has changed, trigger a revision save.
         //add_filter('wp_save_post_revision_post_has_changed', [$this, '_wp_check_revisioned_meta_fields_have_changed'], 10, 3);
 
@@ -105,9 +98,8 @@ class Core
         add_filter('update_post_metadata', [$this, 'update_post_metadata'], 1, 5);
     }
 
-    public function update_post_metadata($check, int $object_id, string $meta_key, $meta_value, $prev_value)
-    {
-        if ($meta_key == '_edit_last') {
+    public function update_post_metadata($check, int $object_id, string $meta_key, $meta_value, $prev_value) {
+        if ('_edit_last' == $meta_key) {
             $lo = get_post_meta($object_id, '_edit_last', true);
             $this->last_author = $lo;
         }
@@ -115,8 +107,7 @@ class Core
         return null;
     }
 
-    public function inject_metadata_timeshift($value, $post_id, $key, $single)
-    {
+    public function inject_metadata_timeshift($value, $post_id, $key, $single) {
         if (! isset($_GET['timeshift'])) {
             return;
         }
@@ -126,7 +117,7 @@ class Core
             $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
             $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
             $r = $this->wpdb->get_results($sql);
-            if ($r && count($r) == 1) {
+            if ($r && 1 == count($r)) {
                 $payload = unserialize($r[0]->post_payload);
                 $this->timeshift_cached_meta = $payload->meta;
             }
@@ -140,8 +131,7 @@ class Core
         }
     }
 
-    public function inject_timeshift($p)
-    {
+    public function inject_timeshift($p) {
         global $post;
         if (! isset($_GET['timeshift'])) {
             return;
@@ -150,14 +140,13 @@ class Core
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
         $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
         $r = $this->wpdb->get_results($sql);
-        if ($r && count($r) == 1) {
+        if ($r && 1 == count($r)) {
             $payload = unserialize($r[0]->post_payload);
             $post = $payload->post;
         }
     }
 
-    public function add_actions()
-    {
+    public function add_actions() {
         add_action('edit_form_top', [$this, 'inject_timeshift'], 1, 1);
         add_action('pre_post_update', [$this, 'pre_post_update'], 2, 1);
         add_action('admin_notices', [$this, 'admin_notice']);
@@ -166,8 +155,7 @@ class Core
         add_action('wp_ajax_pagination_timeshift', [$this, 'timeshift_metabox']);
     }
 
-    public function admin_notice()
-    {
+    public function admin_notice() {
         if (isset($_GET['timeshift']) && $_GET['timeshift']) {
             echo '<div class="notice notice-warning is-dismissible">';
             echo '<p style="font-weight: 800; color: red">' . __('You are editing a historical version! if you save or publish, this will replace the current live one', 'kmm-timeshift') . '</p>';
@@ -175,8 +163,7 @@ class Core
         }
     }
 
-    public function enqueue_scripts()
-    {
+    public function enqueue_scripts() {
         wp_enqueue_script('krn-timeshift-pagination-ajax', plugin_dir_url(__FILE__) . '../assets/js/pagination-ajax.js', ['jquery']);
         wp_localize_script('krn-timeshift-pagination-ajax', 'krn_timeshift', [
             'action' => $this->pagination_ajax_action,
@@ -185,8 +172,7 @@ class Core
         ]);
     }
 
-    public function checkTable($postType)
-    {
+    public function checkTable($postType) {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $postType;
 
         $charset_collate = $this->wpdb->get_charset_collate();
@@ -199,31 +185,28 @@ class Core
                 PRIMARY KEY (id)
             ) $charset_collate;";
 
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         $a = dbDelta($sql);
 
         return true;
     }
 
-    public function storeTimeshift($timeshift)
-    {
+    public function storeTimeshift($timeshift) {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $timeshift->post->post_type;
         $sql = "insert into $table_name (post_id, post_payload) VALUES(%d, '%s')";
         $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
         $this->wpdb->query($query);
     }
 
-    public function create_snapshot($postID)
-    {
+    public function create_snapshot($postID) {
         $this->pre_post_update($postID);
     }
 
-    public function pre_post_update(int $post_ID, array $data = null)
-    {
+    public function pre_post_update(int $post_ID, array $data = null) {
         if (wp_is_post_autosave($post_ID)) {
             return;
         }
-        if (get_post_status($post_ID) == 'auto-draft') {
+        if ('auto-draft' == get_post_status($post_ID)) {
             return;
         }
         $post_type = get_post_type($post_ID);
@@ -241,8 +224,7 @@ class Core
         $this->storeTimeshift($timeshift);
     }
 
-    public function get_paginated_links($prod_post, $paged = 1)
-    {
+    public function get_paginated_links($prod_post, $paged = 1) {
         if (is_null($prod_post)) {
             return;
         }
@@ -251,7 +233,7 @@ class Core
         $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
         $sql = "select  count(1) as cnt from $table_name where post_id=" . $prod_post->ID;
         $maxrows = $this->wpdb->get_results($sql);
-        $allrows = (int)$maxrows[0]->{'cnt'};
+        $allrows = (int) $maxrows[0]->{'cnt'};
 
         // max. number of pages
         $max_page = ceil($allrows / $this->timeshift_posts_per_page);
@@ -268,8 +250,7 @@ class Core
         return $output;
     }
 
-    public function get_next_rows($prod_post, $start = 0)
-    {
+    public function get_next_rows($prod_post, $start = 0) {
         if (! isset($prod_post)) {
             return;
         }
@@ -281,8 +262,7 @@ class Core
         return $rows;
     }
 
-    public function render_metabox_table($prod_post, $rows = [])
-    {
+    public function render_metabox_table($prod_post, $rows = []) {
         if (! isset($prod_post)) {
             return;
         }
