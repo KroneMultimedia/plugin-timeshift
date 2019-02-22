@@ -195,7 +195,7 @@ class Core
                 id int(12) NOT NULL AUTO_INCREMENT,
                 post_id int(12) NOT NULL,
                 create_date datetime default CURRENT_TIMESTAMP,
-                post_payload TEXT,
+                post_payload LONGTEXT,
                 PRIMARY KEY (id)
             ) $charset_collate;";
 
