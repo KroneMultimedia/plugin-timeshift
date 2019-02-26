@@ -1,51 +1,46 @@
 <?php
 /**
-* @covers KMM\Timeshift\Core
+* @covers \KMM\Timeshift\Core
 */
 use KMM\Timeshift\Core;
-use phpmock\MockBuilder;
 
-class TimeshiftTestDB
-{
-    public $prefix = "wptest";
+class TimeshiftTestDB {
+    public $prefix = 'wptest';
 
-    public function query($sql)
-    {
+    public function query($sql) {
     }
-    public function get_results($r)
-    {
+
+    public function get_results($r) {
     }
-    public function prepare($data)
-    {
+
+    public function prepare($data) {
     }
 }
 
-class TestTimeshift extends \WP_UnitTestCase
-{
-    public function setUp()
-    {
-        # setup a rest server
+class TestTimeshift extends \WP_UnitTestCase {
+    public function setUp() {
+        // setup a rest server
         parent::setUp();
         $this->core = new Core('i18n');
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function hasTimeshiftsTrue() {
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post_type = get_post_type($post_id);
         $table_name = 'wptesttimeshift_article';
-        $objArr = array('amount' => '1');
+        $objArr = ['amount' => '1'];
         $objArr = (object) $objArr;
-        $arr = array($objArr);
+        $arr = [$objArr];
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'get_charset_collate', 'get_results' ))
+            ->setMethods(['get_charset_collate', 'get_results'])
             ->getMock();
 
-        $mock->prefix = "wptest";
+        $mock->prefix = 'wptest';
 
         //Expect query sent
         $mock->expects($this->once())
@@ -60,19 +55,19 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function hasTimeshiftsFalse() {
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post_type = get_post_type($post_id);
         $table_name = 'wptesttimeshift_article';
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'get_charset_collate', 'get_results' ))
+            ->setMethods(['get_charset_collate', 'get_results'])
             ->getMock();
 
-        $mock->prefix = "wptest";
+        $mock->prefix = 'wptest';
 
         //Expect query sent
         $mock->expects($this->once())
@@ -86,34 +81,34 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function timeshiftVisible() {
         $r = $this->core->timeshiftVisible();
         $this->assertTrue($r);
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function add_metabox_no_post() {
         $r = $this->core->add_metabox();
         $this->assertNull($r);
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function timeshift_metabox_no_post() {
         $r = $this->core->timeshift_metabox();
         $this->assertNull($r);
     }
 
     /**
-    * @1test1 - FIXME
-    */
+     * @1test1 - FIXME
+     */
     public function timeshift_metabox() {
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $_GET['post'] = $post_id;
         global $post;
         $post = get_post($post_id);
@@ -122,28 +117,25 @@ class TestTimeshift extends \WP_UnitTestCase
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'get_results', 'get_var' ))
+            ->setMethods(['get_results', 'get_var'])
             ->getMock();
 
-        $mock->prefix = "wptest";
+        $mock->prefix = 'wptest';
 
         //Expect query sent
         $mock->expects($this->exactly(2))
             ->method('get_results')
             ->withConsecutive([
               ["select  * from $table_name where post_id=" . $post->ID . ' order by create_date desc limit 0,10', '1'],
-              ["aaaa"],
+              ['aaaa'],
               ])
-            ->willReturnOnConsecutiveCalls([$obj, (object)["cnt"=>1]]);
-
-
-
+            ->willReturnOnConsecutiveCalls([$obj, (object) ['cnt' => 1]]);
 
         //Expect query sent
         $table_name = 'wptestpostmeta';
         $mock->expects($this->once())
             ->method('get_var')
-            ->with("select meta_value from " . $table_name . " where post_id=" . $post->ID . " AND meta_key='_edit_last'")
+            ->with('select meta_value from ' . $table_name . ' where post_id=' . $post->ID . " AND meta_key='_edit_last'")
             ->willReturn($obj);
 
         $this->core->wpdb = $mock;
@@ -152,10 +144,10 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function update_post_metadata() {
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post = get_post_type($post_id);
         add_post_meta($post_id, '_edit_last', 'Author Name');
 
@@ -166,29 +158,29 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function inject_timeshift_no_timeshift() {
         $r = $this->core->inject_timeshift(null);
         $this->assertNull($r);
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function inject_timeshift() {
         $_GET['timeshift'] = 23;
         global $post;
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post = get_post($post_id);
         $table_name = 'wptesttimeshift_article';
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-        ->setMethods(array( 'get_results' ))
+        ->setMethods(['get_results'])
         ->getMock();
 
-        $mock->prefix = "wptest";
+        $mock->prefix = 'wptest';
 
         //Expect query sent
         $mock->expects($this->once())
@@ -201,18 +193,18 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function checkTable() {
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post_type = get_post_type($post_id);
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'get_charset_collate' ))
+            ->setMethods(['get_charset_collate'])
             ->getMock();
 
-        $mock->prefix = "wptest";
+        $mock->prefix = 'wptest';
 
         //Expect query sent
         $mock->expects($this->once())
@@ -225,21 +217,21 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function storeTimeshift() {
         $table_name = 'wptesttimeshift_article';
-        $post_id = $this->factory->post->create(['post_type' => "article"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post = get_post($post_id);
-        $timeshift = array('post' => $post);
+        $timeshift = ['post' => $post];
         $timeshift = (object) $timeshift;
 
         //Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
-            ->setMethods(array( 'prepare', 'query' ))
+            ->setMethods(['prepare', 'query'])
             ->getMock();
 
-        $mock->prefix = "wptest";
+        $mock->prefix = 'wptest';
 
         //Expect query sent
         $mock->expects($this->once())
@@ -256,17 +248,16 @@ class TestTimeshift extends \WP_UnitTestCase
     }
 
     /**
-    * @test
-    */
+     * @test
+     */
     public function pre_post_update_auto_draft() {
-        $post_id = $this->factory->post->create(['post_type' => "article", 'post_status' => "auto_draft"]);
+        $post_id = $this->factory->post->create(['post_type' => 'article', 'post_status' => 'auto_draft']);
 
         $r = $this->core->pre_post_update($post_id, null);
         $this->assertNull($r);
     }
 
-    public function tearDown()
-    {
+    public function tearDown() {
         parent::tearDown();
     }
 }
