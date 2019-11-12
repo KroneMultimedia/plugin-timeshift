@@ -34,7 +34,7 @@ class Core {
         $this->checkTable($post_type);
         $sql = "select count(1) as amount from $table_name where post_id=" . $post_id;
         $r = $this->wpdb->get_results($sql);
-
+        
         if ($r && 1 == count($r)) {
             if (intval($r[0]->amount) > 0) {
                 return true;
@@ -149,6 +149,7 @@ class Core {
     public function add_actions() {
         add_action('edit_form_top', [$this, 'inject_timeshift'], 1, 1);
         add_action('pre_post_update', [$this, 'pre_post_update'], 2, 1);
+        add_action('add_attachment', [$this, 'add_attachment'], 1, 1);
         add_action('admin_notices', [$this, 'admin_notice']);
         add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
@@ -199,6 +200,10 @@ class Core {
     }
 
     public function create_snapshot($postID) {
+        $this->pre_post_update($postID);
+    }
+
+    public function add_attachment($postID) {
         $this->pre_post_update($postID);
     }
 

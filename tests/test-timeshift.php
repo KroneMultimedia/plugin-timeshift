@@ -260,4 +260,25 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function tearDown() {
         parent::tearDown();
     }
+
+    /**
+     * Unit test
+     * 
+     * @test
+     */
+    public function add_attachment() {
+        // var_dump('here');exit;
+        // prepare input
+        $postID = 777;
+        
+        // Mock SUT
+        $coreMocked = $this->getMockBuilder(Core::class)
+                           ->disableOriginalConstructor()
+                           ->setMethods(['pre_post_update'])
+                           ->getMock();
+        $coreMocked->expects($this->once())->method('pre_post_update')->with($postID);
+
+        // Run test
+        $coreMocked->add_attachment($postID);
+    }
 }
