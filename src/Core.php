@@ -34,7 +34,7 @@ class Core {
         $this->checkTable($post_type);
         $sql = "select count(1) as amount from $table_name where post_id=" . $post_id;
         $r = $this->wpdb->get_results($sql);
-        
+
         if ($r && 1 == count($r)) {
             if (intval($r[0]->amount) > 0) {
                 return true;
