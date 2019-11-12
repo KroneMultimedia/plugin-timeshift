@@ -266,8 +266,7 @@ class TestTimeshift extends \WP_UnitTestCase {
      * 
      * @test
      */
-    public function add_attachment() {
-        // var_dump('here');exit;
+    public function add_attachment_unit() {
         // prepare input
         $postID = 777;
         
@@ -280,5 +279,31 @@ class TestTimeshift extends \WP_UnitTestCase {
 
         // Run test
         $coreMocked->add_attachment($postID);
+    }
+
+    /**
+     * Semi-integration test. Mainly testing pre_post_update()
+     * 
+     * @test
+     */
+    public function add_attachment_integr() {
+        // Prepare input
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        $post = get_post($postId);
+        $mdata = get_metadata('post', $postId);
+
+        // Prepare timeshift
+        $timeshift = (object) [
+            'post' => $post,
+            'meta' => $mdata
+        ];
+
+        // Mock SUT
+        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
+                           ->setMethods(['storeTimeshift'])->getMock();
+        $coreMocked->expects($this->once())->method('storeTimeshift')->with($timeshift);
+
+        // Run test
+        $coreMocked->add_attachment($postId);
     }
 }
