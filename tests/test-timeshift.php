@@ -260,4 +260,50 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function tearDown() {
         parent::tearDown();
     }
+
+    /**
+     * Unit test
+     * 
+     * @test
+     */
+    public function add_attachment_unit() {
+        // prepare input
+        $postID = 777;
+        
+        // Mock SUT
+        $coreMocked = $this->getMockBuilder(Core::class)
+                           ->disableOriginalConstructor()
+                           ->setMethods(['pre_post_update'])
+                           ->getMock();
+        $coreMocked->expects($this->once())->method('pre_post_update')->with($postID);
+
+        // Run test
+        $coreMocked->add_attachment($postID);
+    }
+
+    /**
+     * Semi-integration test. Mainly testing pre_post_update()
+     * 
+     * @test
+     */
+    public function add_attachment_integr() {
+        // Prepare input
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        $post = get_post($postId);
+        $mdata = get_metadata('post', $postId);
+
+        // Prepare timeshift
+        $timeshift = (object) [
+            'post' => $post,
+            'meta' => $mdata
+        ];
+
+        // Mock SUT
+        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
+                           ->setMethods(['storeTimeshift'])->getMock();
+        $coreMocked->expects($this->once())->method('storeTimeshift')->with($timeshift);
+
+        // Run test
+        $coreMocked->add_attachment($postId);
+    }
 }
