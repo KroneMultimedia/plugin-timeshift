@@ -55,7 +55,8 @@ class Core {
         if (! $this->timeshiftVisible()) {
             return;
         }
-        if (! isset($_GET['post']) || ! $this->hasTimeshifts($_GET['post'])) {
+        // Keep adding the metabox even if no timeshifts available, i.e. will render timeshift box with only live version
+        if (! isset($_GET['post'])) {
             return;
         }
         add_action('add_meta_boxes', function () use ($cl) {
@@ -239,8 +240,11 @@ class Core {
         // print_r($mdata);
         // exit;
 
-        $timeshift = (object) ['post' => $post, 'meta' => $mdata];
-        $this->storeTimeshift($timeshift);
+        // Don't save timeshift when the media was just uploaded, i.e. the post was just created
+        if (count($mdata) > 1) {
+            $timeshift = (object) ['post' => $post, 'meta' => $mdata];
+            $this->storeTimeshift($timeshift);
+        }
     }
 
     public function get_paginated_links($prod_post, $paged = 1) {
@@ -291,9 +295,6 @@ class Core {
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
-        if ($last_editor == null) {
-            $last_editor = $prod_post->post_author;
-        }
         
         // var_dump(
         //     'custom: ', $last_editor,
