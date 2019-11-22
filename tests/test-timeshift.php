@@ -268,7 +268,7 @@ class TestTimeshift extends \WP_UnitTestCase {
      */
     public function add_attachment_unit() {
         // prepare input
-        $postID = 777;
+        $postID = $this->factory->post->create(['post_type' => 'article']);
         
         // Mock SUT
         $coreMocked = $this->getMockBuilder(Core::class)
@@ -294,6 +294,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Add two keys to meta which are enough to run storeTimeshift()
         update_post_meta($postId, 'tesKey1', 'testKey1');
         update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, '_edit_last', 0);
         $mdata = get_metadata('post', $postId);
 
         // Prepare timeshift
