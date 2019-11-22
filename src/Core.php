@@ -280,7 +280,7 @@ class Core {
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
-        
+
         $output = '<table class="widefat fixed">';
         $output .= '<thead>';
         $output .= '<tr>';
