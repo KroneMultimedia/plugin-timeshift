@@ -282,14 +282,18 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Semi-integration test. Mainly testing pre_post_update()
+     * Semi-integration test. Mainly testing pre_post_update() when
+     * timeshift stored
      * 
      * @test
      */
-    public function add_attachment_integr() {
+    public function add_attachment_integr_store_timeshift() {
         // Prepare input
         $postId = $this->factory->post->create(['post_type' => 'article']);
         $post = get_post($postId);
+        // Add two keys to meta which are enough to run storeTimeshift()
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
         $mdata = get_metadata('post', $postId);
 
         // Prepare timeshift
@@ -302,6 +306,27 @@ class TestTimeshift extends \WP_UnitTestCase {
         $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
                            ->setMethods(['storeTimeshift'])->getMock();
         $coreMocked->expects($this->once())->method('storeTimeshift')->with($timeshift);
+
+        // Run test
+        $coreMocked->add_attachment($postId);
+    }
+
+    /**
+     * Semi-integration test. Mainly testing pre_post_update() when
+     * timeshift not stored
+     * 
+     * @test
+     */
+    public function add_attachment_integr_skip_timeshift() {
+        // Prepare input
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        // Add just one key to meta which is not enough to run storeTimeshift()
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+
+        // Mock SUT
+        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
+                           ->setMethods(['storeTimeshift'])->getMock();
+        $coreMocked->expects($this->never())->method('storeTimeshift');
 
         // Run test
         $coreMocked->add_attachment($postId);
