@@ -205,6 +205,8 @@ class Core {
     }
 
     public function add_attachment($postID) {
+        $post = get_post($postID);
+        update_post_meta($postID, '_edit_last', $post->post_author);
         $this->pre_post_update($postID);
     }
 
@@ -227,7 +229,7 @@ class Core {
         unset($mdata['_edit_lock']);
 
         // Don't save timeshift when the media was just uploaded, i.e. the post was just created
-        if (count($mdata) > 1) {
+        if (count($mdata) > 2) {
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
             $this->storeTimeshift($timeshift);
         }
