@@ -224,21 +224,7 @@ class Core {
         if ($this->last_author) {
             $mdata['_edit_last'][0] = $this->last_author;
         }
-        //$mdata['_edit_last'] = [$post->post_author];
-
-        // add_action( 'shutdown', function(){
-        //     foreach( $GLOBALS['wp_actions'] as $action => $count )
-        //         printf( '%s (%d) <br/>' . PHP_EOL, $action, $count );
-        
-        // });
-        // do_action('shutdown');
-        
         unset($mdata['_edit_lock']);
-
-        // echo "<pre>";
-        // print_r($this->last_author);
-        // print_r($mdata);
-        // exit;
 
         // Don't save timeshift when the media was just uploaded, i.e. the post was just created
         if (count($mdata) > 1) {
@@ -280,7 +266,6 @@ class Core {
 
         $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
         $sql = "select  * from $table_name where post_id=" . $prod_post->ID . ' order by create_date desc limit ' . $start . ', ' . $this->timeshift_posts_per_page;
-        // var_dump('get_next_rows SQL:', $sql);exit;
         $rows = $this->wpdb->get_results($sql);
 
         return $rows;
@@ -296,18 +281,6 @@ class Core {
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
         
-        // var_dump(
-        //     'custom: ', $last_editor,
-        //     'get_the_modified_author(): ', get_the_modified_author(),
-        //     'post meta: ', get_post_meta( get_post()->ID, '_edit_last', true ),
-        //     '$prod_post->ID: ', $prod_post->ID,
-        //     'prod_post->post_author', $prod_post->post_author,
-        //     'author name:', get_the_author_meta('display_name', $prod_post->post_author),
-        // );
-        // var_dump($last_editor);exit;
-        // var_dump($sql_last_editor, $last_editor);exit;
-        // var_dump('get_current_user_id(): ', get_current_user_id());exit;
-
         $output = '<table class="widefat fixed">';
         $output .= '<thead>';
         $output .= '<tr>';
@@ -329,10 +302,8 @@ class Core {
         $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
         $output .= '</tr>';
 
-        // var_dump($rows);exit;
         foreach ($rows as $rev) {
             $timeshift = unserialize($rev->post_payload);
-            // var_dump($timeshift);exit;
             $style = '';
 
             // highlight currently loaded version
