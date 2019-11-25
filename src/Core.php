@@ -200,6 +200,17 @@ class Core {
         $this->wpdb->query($query);
     }
 
+    private function storeTimeshiftVersion($postID, $mdata) {
+        if (is_array($mdata) && array_key_exists('_timeshift_version', $mdata) &&
+        is_numeric($mdata['_timeshift_version'][0])) {
+            $prevVer = (int)$mdata['_timeshift_version'][0];
+            update_post_meta($postID, '_timeshift_version', ++$prevVer);
+        } else {
+            // Write initial version
+            update_post_meta($postID, '_timeshift_version', 1);
+        }
+    }
+
     public function create_snapshot($postID) {
         $this->pre_post_update($postID);
     }
@@ -232,6 +243,7 @@ class Core {
         if (count($mdata) > 2) {
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
             $this->storeTimeshift($timeshift);
+            $this->storeTimeshiftVersion($post_ID, $mdata);
         }
     }
 

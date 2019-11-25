@@ -332,4 +332,54 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Run test
         $coreMocked->add_attachment($postId);
     }
+
+    public function provideStoreTimeshiftVersion() {
+        // First version of timeshift is assigned
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, 'tesKey3', 'testKey3');
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 1;
+        yield [$postId, $mdata, $expectedTimeshiftVer];
+
+        // Increment previous valid version
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, '_timeshift_version', 2);
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 3;
+        yield [$postId, $mdata, $expectedTimeshiftVer];
+
+        // Version number not numeric
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, '_timeshift_version', 'not numeric');
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 1;
+        yield [$postId, $mdata, $expectedTimeshiftVer];
+    }
+    
+    /**
+     * Unit test when first version of timeshift is assigned
+     * 
+     * @test
+     * @dataProvider provideStoreTimeshiftVersion
+     */
+    public function storeTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
+        // Mock SUT
+        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
+                           ->setMethods(['checkTable', 'storeTimeshift'])->getMock();
+        $coreMocked->expects($this->once())->method('checkTable');
+        $coreMocked->expects($this->once())->method('storeTimeshift');
+        
+        // Run the test
+        $coreMocked->pre_post_update($postId);
+
+        // Check result
+        $mdata = get_metadata('post', $postId);
+        $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
+    }
 }
