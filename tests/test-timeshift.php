@@ -295,6 +295,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         update_post_meta($postId, 'tesKey1', 'testKey1');
         update_post_meta($postId, 'tesKey2', 'testKey2');
         update_post_meta($postId, '_edit_last', 0);
+        update_post_meta($postId, '_timeshift_version', 0);
         $mdata = get_metadata('post', $postId);
 
         // Prepare timeshift
@@ -303,13 +304,18 @@ class TestTimeshift extends \WP_UnitTestCase {
             'meta' => $mdata
         ];
 
-        // Mock SUT
-        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
-                           ->setMethods(['storeTimeshift'])->getMock();
-        $coreMocked->expects($this->once())->method('storeTimeshift')->with($timeshift);
+        // Instantiate SUT
+        $core = new Core('i18n');
 
         // Run test
-        $coreMocked->add_attachment($postId);
+        $core->add_attachment($postId);
+
+        // Check that timeshift version was stored
+        $allTimeshifts = $core->get_next_rows($post);
+        $timeshift = unserialize($allTimeshifts[0]->post_payload);
+        $timeshiftVersion = $timeshift->meta['_timeshift_version'][0];
+        $expectedVersion = 0;
+        $this->assertEquals($expectedVersion, $timeshiftVersion);
     }
 
     /**
@@ -333,7 +339,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $coreMocked->add_attachment($postId);
     }
 
-    public function provideStoreTimeshiftVersion() {
+    public function provideUpdateTimeshiftVersion() {
         // First version of timeshift is assigned
         $postId = $this->factory->post->create(['post_type' => 'article']);
         update_post_meta($postId, 'tesKey1', 'testKey1');
@@ -366,7 +372,7 @@ class TestTimeshift extends \WP_UnitTestCase {
      * Unit test when first version of timeshift is assigned
      * 
      * @test
-     * @dataProvider provideStoreTimeshiftVersion
+     * @dataProvider provideUpdateTimeshiftVersion
      */
     public function updateTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
         // Instantiate SUT
@@ -379,6 +385,4 @@ class TestTimeshift extends \WP_UnitTestCase {
         $mdata = get_metadata('post', $postId);
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
-
-    // TODO: test storing version in attachment meta
 }
