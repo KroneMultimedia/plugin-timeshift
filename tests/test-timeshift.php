@@ -338,18 +338,18 @@ class TestTimeshift extends \WP_UnitTestCase {
         $postId = $this->factory->post->create(['post_type' => 'article']);
         update_post_meta($postId, 'tesKey1', 'testKey1');
         update_post_meta($postId, 'tesKey2', 'testKey2');
-        update_post_meta($postId, 'tesKey3', 'testKey3');
         $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 1;
+        $expectedTimeshiftVer = 0;
         yield [$postId, $mdata, $expectedTimeshiftVer];
 
         // Increment previous valid version
         $postId = $this->factory->post->create(['post_type' => 'article']);
         update_post_meta($postId, 'tesKey1', 'testKey1');
         update_post_meta($postId, 'tesKey2', 'testKey2');
-        update_post_meta($postId, '_timeshift_version', 2);
+        $oldVersion = 2;
+        update_post_meta($postId, '_timeshift_version', $oldVersion);
+        $expectedTimeshiftVer = ++$oldVersion;
         $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 3;
         yield [$postId, $mdata, $expectedTimeshiftVer];
 
         // Version number not numeric
@@ -358,7 +358,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         update_post_meta($postId, 'tesKey2', 'testKey2');
         update_post_meta($postId, '_timeshift_version', 'not numeric');
         $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 1;
+        $expectedTimeshiftVer = 0;
         yield [$postId, $mdata, $expectedTimeshiftVer];
     }
     
@@ -368,18 +368,17 @@ class TestTimeshift extends \WP_UnitTestCase {
      * @test
      * @dataProvider provideStoreTimeshiftVersion
      */
-    public function storeTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
-        // Mock SUT
-        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
-                           ->setMethods(['checkTable', 'storeTimeshift'])->getMock();
-        $coreMocked->expects($this->once())->method('checkTable');
-        $coreMocked->expects($this->once())->method('storeTimeshift');
+    public function updateTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
+        // Instantiate SUT
+        $core = new Core('i18n');
         
         // Run the test
-        $coreMocked->pre_post_update($postId);
+        $core->pre_post_update($postId);
 
         // Check result
         $mdata = get_metadata('post', $postId);
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
+
+    // TODO: test storing version in attachment meta
 }

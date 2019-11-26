@@ -195,19 +195,25 @@ class Core {
 
     public function storeTimeshift($timeshift) {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $timeshift->post->post_type;
+        // var_dump($table_name);exit;
         $sql = "insert into $table_name (post_id, post_payload) VALUES(%d, '%s')";
         $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
         $this->wpdb->query($query);
     }
 
-    private function storeTimeshiftVersion($postID, $mdata) {
+    private function updateTimeshiftVersion($postID, $mdata): int {
+        /* Increment version for post's meta and return previous version 
+        to store it in attachment table */
         if (is_array($mdata) && array_key_exists('_timeshift_version', $mdata) &&
         is_numeric($mdata['_timeshift_version'][0])) {
             $prevVer = (int)$mdata['_timeshift_version'][0];
             update_post_meta($postID, '_timeshift_version', ++$prevVer);
+            return $prevVer;
         } else {
             // Write initial version
-            update_post_meta($postID, '_timeshift_version', 1);
+            $initialVer = 0;
+            update_post_meta($postID, '_timeshift_version', $initialVer);
+            return $initialVer;
         }
     }
 
@@ -239,11 +245,14 @@ class Core {
         }
         unset($mdata['_edit_lock']);
 
+        // Store timeshift version to post's meta
+        $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
+        
         // Don't save timeshift when the media was just uploaded, i.e. the post was just created
         if (count($mdata) > 2) {
+            $mdata['_timeshift_version'][0] = $timeshiftVer;
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
             $this->storeTimeshift($timeshift);
-            $this->storeTimeshiftVersion($post_ID, $mdata);
         }
     }
 
