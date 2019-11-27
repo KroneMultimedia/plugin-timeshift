@@ -292,9 +292,9 @@ class TestTimeshift extends \WP_UnitTestCase {
         $postId = $this->factory->post->create(['post_type' => 'article']);
         $post = get_post($postId);
         // Add two keys to meta which are enough to run storeTimeshift()
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        update_post_meta($postId, '_edit_last', 0);
+        update_post_meta($postId, 'tesKey1', 'testVal1');
+        update_post_meta($postId, 'tesKey2', 'testVal2');
+        update_post_meta($postId, '_edit_last', '');
         $mdata = get_metadata('post', $postId);
 
         // Prepare timeshift
