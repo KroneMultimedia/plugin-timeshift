@@ -225,6 +225,9 @@ class Core {
 
         if ($this->last_author) {
             $mdata['_edit_last'][0] = $this->last_author;
+        } else {
+            // For unknown last author, clear it. It is a current user now
+            $mdata['_edit_last'][0] = '';
         }
         unset($mdata['_edit_lock']);
 
