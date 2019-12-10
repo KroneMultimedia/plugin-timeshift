@@ -55,7 +55,8 @@ class Core {
         if (! $this->timeshiftVisible()) {
             return;
         }
-        if (! isset($_GET['post']) || ! $this->hasTimeshifts($_GET['post'])) {
+        // Keep adding the metabox even if no timeshifts available, i.e. will render timeshift box with only live version
+        if (! isset($_GET['post'])) {
             return;
         }
         add_action('add_meta_boxes', function () use ($cl) {
@@ -204,6 +205,8 @@ class Core {
     }
 
     public function add_attachment($postID) {
+        $post = get_post($postID);
+        update_post_meta($postID, '_edit_last', $post->post_author);
         $this->pre_post_update($postID);
     }
 
@@ -222,11 +225,17 @@ class Core {
 
         if ($this->last_author) {
             $mdata['_edit_last'][0] = $this->last_author;
+        } else {
+            // For unknown last author, clear it. It is a current user now
+            $mdata['_edit_last'][0] = '';
         }
         unset($mdata['_edit_lock']);
 
-        $timeshift = (object) ['post' => $post, 'meta' => $mdata];
-        $this->storeTimeshift($timeshift);
+        // Don't save timeshift when the media was just uploaded, i.e. the post was just created
+        if (count($mdata) > 2) {
+            $timeshift = (object) ['post' => $post, 'meta' => $mdata];
+            $this->storeTimeshift($timeshift);
+        }
     }
 
     public function get_paginated_links($prod_post, $paged = 1) {
