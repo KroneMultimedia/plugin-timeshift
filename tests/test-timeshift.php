@@ -88,6 +88,28 @@ class TestTimeshift extends \WP_UnitTestCase {
         $this->assertTrue($r);
     }
 
+    public function provideTimeshiftVisibleFalse() {
+        yield [true];
+        yield [false];
+    }
+    
+    /**
+     * Integration test checking that filter krn_timeshift_visible is triggered
+     * 
+     * @test
+     * @dataProvider provideTimeshiftVisibleFalse
+     */
+    public function timeshiftVisibleIntegr($expectedResult) {
+        // Register the filter
+        add_filter('krn_timeshift_visible', function() use ($expectedResult) {
+            return $expectedResult;
+        });
+
+        // Run the test
+        $result = $this->core->timeshiftVisible();
+        $this->assertEquals($expectedResult, $result);
+    }
+
     /**
      * @test
      */
