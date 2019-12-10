@@ -201,17 +201,19 @@ class Core {
     }
 
     private function updateTimeshiftVersion($postID, $mdata): int {
-        /* Increment version for post's meta and return previous version 
+        /* Increment version for post's meta and return previous version
         to store it in attachment table */
         if (is_array($mdata) && array_key_exists('_timeshift_version', $mdata) &&
         is_numeric($mdata['_timeshift_version'][0])) {
-            $prevVer = (int)$mdata['_timeshift_version'][0];
+            $prevVer = (int) $mdata['_timeshift_version'][0];
             update_post_meta($postID, '_timeshift_version', $prevVer + 1);
+
             return $prevVer;
         } else {
             // Write initial version
             $initialVer = 0;
             update_post_meta($postID, '_timeshift_version', $initialVer);
+
             return $initialVer;
         }
     }
@@ -288,6 +290,7 @@ class Core {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
         $sql = "select  * from $table_name where post_id=" . $prod_post->ID . ' order by create_date desc limit ' . $start . ', ' . $this->timeshift_posts_per_page;
         $rows = $this->wpdb->get_results($sql);
+
         return $rows;
     }
 
