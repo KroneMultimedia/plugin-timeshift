@@ -201,20 +201,19 @@ class Core {
     }
 
     private function updateTimeshiftVersion($postID, $mdata): int {
-        /* Increment version for post's meta and return previous version
-        to store it in attachment table */
-        if (is_array($mdata) && array_key_exists('_timeshift_version', $mdata) &&
+        $verToSave = 0;
+        if (is_array($mdata) && isset($mdata['_timeshift_version'][0]) &&
         is_numeric($mdata['_timeshift_version'][0])) {
-            $prevVer = (int) $mdata['_timeshift_version'][0];
-            update_post_meta($postID, '_timeshift_version', $prevVer + 1);
-
-            return $prevVer;
+            // Increment version for post's meta
+            $verToSave = (int) $mdata['_timeshift_version'][0] + 1;
+        }
+        update_post_meta($postID, '_timeshift_version', $verToSave);
+        if ($verToSave > 1) {
+            // Previous version for when timeshift existed before
+            return $verToSave - 1;
         } else {
-            // Write initial version
-            $initialVer = 0;
-            update_post_meta($postID, '_timeshift_version', $initialVer);
-
-            return $initialVer;
+            // When this is the first timeshift
+            return 0;
         }
     }
 
