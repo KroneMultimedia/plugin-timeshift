@@ -200,6 +200,23 @@ class Core {
         $this->wpdb->query($query);
     }
 
+    private function updateTimeshiftVersion($postID, $mdata): int {
+        $verToSave = 0;
+        if (is_array($mdata) && isset($mdata['_timeshift_version'][0]) &&
+        is_numeric($mdata['_timeshift_version'][0])) {
+            // Increment version for post's meta
+            $verToSave = (int) $mdata['_timeshift_version'][0] + 1;
+        }
+        update_post_meta($postID, '_timeshift_version', $verToSave);
+        if ($verToSave > 1) {
+            // Previous version for when timeshift existed before
+            return $verToSave - 1;
+        } else {
+            // When this is the first timeshift
+            return 0;
+        }
+    }
+
     public function create_snapshot($postID) {
         $this->pre_post_update($postID);
     }
@@ -231,8 +248,11 @@ class Core {
         }
         unset($mdata['_edit_lock']);
 
+        // Store timeshift version to post's meta
+        $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
         // Don't save timeshift when the media was just uploaded, i.e. the post was just created
         if (count($mdata) > 2) {
+            $mdata['_timeshift_version'][0] = $timeshiftVer;
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
             $this->storeTimeshift($timeshift);
         }

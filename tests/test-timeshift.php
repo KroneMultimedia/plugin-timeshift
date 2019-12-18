@@ -314,9 +314,10 @@ class TestTimeshift extends \WP_UnitTestCase {
         $postId = $this->factory->post->create(['post_type' => 'article']);
         $post = get_post($postId);
         // Add two keys to meta which are enough to run storeTimeshift()
-        update_post_meta($postId, 'tesKey1', 'testVal1');
-        update_post_meta($postId, 'tesKey2', 'testVal2');
-        update_post_meta($postId, '_edit_last', '');
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, '_edit_last', 0);
+        update_post_meta($postId, '_timeshift_version', 0);
         $mdata = get_metadata('post', $postId);
 
         // Prepare timeshift
@@ -325,13 +326,18 @@ class TestTimeshift extends \WP_UnitTestCase {
             'meta' => $mdata
         ];
 
-        // Mock SUT
-        $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
-                           ->setMethods(['storeTimeshift'])->getMock();
-        $coreMocked->expects($this->once())->method('storeTimeshift')->with($timeshift);
+        // Instantiate SUT
+        $core = new Core('i18n');
 
         // Run test
-        $coreMocked->add_attachment($postId);
+        $core->add_attachment($postId);
+
+        // Check that timeshift version was stored
+        $allTimeshifts = $core->get_next_rows($post);
+        $timeshift = unserialize($allTimeshifts[0]->post_payload);
+        $timeshiftVersion = $timeshift->meta['_timeshift_version'][0];
+        $expectedVersion = 0;
+        $this->assertEquals($expectedVersion, $timeshiftVersion);
     }
 
     /**
@@ -353,5 +359,52 @@ class TestTimeshift extends \WP_UnitTestCase {
 
         // Run test
         $coreMocked->add_attachment($postId);
+    }
+
+    public function provideUpdateTimeshiftVersion() {
+        // First version of timeshift is assigned
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 0;
+        yield [$postId, $mdata, $expectedTimeshiftVer];
+
+        // Increment previous valid version
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        $oldVersion = 2;
+        update_post_meta($postId, '_timeshift_version', $oldVersion);
+        $expectedTimeshiftVer = ++$oldVersion;
+        $mdata = get_metadata('post', $postId);
+        yield [$postId, $mdata, $expectedTimeshiftVer];
+
+        // Version number not numeric
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, '_timeshift_version', 'not numeric');
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 0;
+        yield [$postId, $mdata, $expectedTimeshiftVer];
+    }
+    
+    /**
+     * Unit test when first version of timeshift is assigned
+     * 
+     * @test
+     * @dataProvider provideUpdateTimeshiftVersion
+     */
+    public function updateTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Run the test
+        $core->pre_post_update($postId);
+
+        // Check result
+        $mdata = get_metadata('post', $postId);
+        $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
 }
