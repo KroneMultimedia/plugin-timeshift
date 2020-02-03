@@ -242,6 +242,7 @@ class Core {
 
         if ($this->last_author) {
             $mdata['_edit_last'][0] = $this->last_author;
+            $mdata['save_initiator'][0] = $this->last_author;
         } else {
             // For unknown last author, clear it. It is a current user now
             $mdata['_edit_last'][0] = '';
@@ -306,13 +307,19 @@ class Core {
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
 
+        // check save initiator
+        if (! $prod_post->save_initiator) {
+            $prod_post->save_initiator = __('unknown', 'kmm-timeshift');
+        }
+
         $output = '<table class="widefat fixed">';
         $output .= '<thead>';
         $output .= '<tr>';
         $output .= '<th width=30></th>';
-        $output .= '<th width="40%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
-        $output .= '<th width="30%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="35%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="25%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
         $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Author', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Save-initiator', 'kmm-timeshift') . '</th>';
         $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Actions', 'kmm-timeshift') . '</th>';
         $output .= '</tr>';
         $output .= '</thead>';
@@ -324,6 +331,7 @@ class Core {
         $output .= '<td>' . $prod_post->post_title . '</td>';
         $output .= '<td>' . $prod_post->post_modified . '</td>';
         $output .= '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
+        $output .= '<td>' . $prod_post->save_initiator . '</td>';
         $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
         $output .= '</tr>';
 
@@ -341,11 +349,19 @@ class Core {
                 $timeshift->meta['_edit_last'] = 0;
             }
 
+            // check save initiator
+            if (array_key_exists('save_initiator', $timeshift->meta) && array_key_exists(0, $timeshift->meta['save_initiator'])) {
+                $save_initiator = get_the_author_meta('display_name', $timeshift->meta['save_initiator'][0]);
+            } else {
+                $save_initiator = __('unknown', 'kmm-timeshift');
+            }
+
             $output .= '<tr ' . $style . '>';
             $output .= '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
             $output .= '<td>' . $timeshift->post->post_title . '</td>';
             $output .= '<td>' . $timeshift->post->post_modified . '</td>';
             $output .= '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
+            $output .= '<td>' . $save_initiator . '</td>';
             $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
             $output .= '</tr>';
         }
