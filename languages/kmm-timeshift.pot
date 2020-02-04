@@ -20,6 +20,10 @@ msgstr ""
 msgid "Timeshift"
 msgstr ""
 
+#: Core.php:312
+msgid "unknown"
+msgstr "unbekannt"
+
 #: Core.php:70
 msgid "Title"
 msgstr ""
@@ -30,6 +34,10 @@ msgstr ""
 
 #: Core.php:72
 msgid "Author"
+msgstr ""
+
+#: Core.php:322
+msgid "Save-initiator"
 msgstr ""
 
 #: Core.php:73
