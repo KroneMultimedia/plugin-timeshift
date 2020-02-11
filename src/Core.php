@@ -152,7 +152,7 @@ class Core {
         add_action('pre_post_update', [$this, 'pre_post_update'], 2, 1);
         add_action('add_attachment', [$this, 'add_attachment'], 1, 1);
         add_action('admin_notices', [$this, 'admin_notice']);
-        add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 1);
+        add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 2);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_pagination_timeshift', [$this, 'timeshift_metabox']);
     }
@@ -217,17 +217,25 @@ class Core {
         }
     }
 
-    public function create_snapshot($postID) {
-        $this->pre_post_update($postID);
+    public function create_snapshot($postID, $editSource) {
+        $this->krn_pre_post_update($postID, null, $editSource);
     }
 
     public function add_attachment($postID) {
         $post = get_post($postID);
         update_post_meta($postID, '_edit_last', $post->post_author);
-        $this->pre_post_update($postID);
+        $this->krn_pre_post_update($postID);
     }
 
-    public function pre_post_update(int $post_ID, array $data = null) {
+    public function pre_post_update(int $post_ID, array $data = null) { 
+        $this->krn_pre_post_update($post_ID, $data);
+    }
+
+    public function krn_pre_post_update(int $post_ID, array $data = null, $editSource = 'Backend') {
+
+        if(apply_filters('krn_timeshift_skip', false, $post_ID, $data, $editSource) == true) {
+            return;
+        }
         if (wp_is_post_autosave($post_ID)) {
             return;
         }
@@ -237,15 +245,29 @@ class Core {
         $post_type = get_post_type($post_ID);
         $this->checkTable($post_type);
 
+        // Get previous save initiator
+        $prevSaveInit = get_post_meta($post_ID, 'save_initiator');
+
+        // When executed by Cron
+        if (defined('DOING_CRON')) {
+            $editSource = 'Kron';
+        }
+
+        // Update live save initiator
+        update_post_meta($post_ID, 'save_initiator', $editSource);
+
         $mdata = get_metadata('post', $post_ID);
         $post = get_post($post_ID);
 
         if ($this->last_author) {
             $mdata['_edit_last'][0] = $this->last_author;
-            $mdata['save_initiator'][0] = $this->last_author;
         } else {
             // For unknown last author, clear it. It is a current user now
             $mdata['_edit_last'][0] = '';
+            if ($editSource == 'Frontend') {
+                $lo = get_post_meta($post_ID, '_edit_last', true);
+                $mdata['_edit_last'][0] = $lo;
+            }
         }
         unset($mdata['_edit_lock']);
 
@@ -254,6 +276,7 @@ class Core {
         // Don't save timeshift when the media was just uploaded, i.e. the post was just created
         if (count($mdata) > 2) {
             $mdata['_timeshift_version'][0] = $timeshiftVer;
+            $mdata['save_initiator'] = $prevSaveInit;
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
             $this->storeTimeshift($timeshift);
         }
@@ -308,8 +331,10 @@ class Core {
         $last_editor = $this->wpdb->get_var($sql_last_editor);
 
         // check save initiator
-        if (! $prod_post->save_initiator) {
-            $prod_post->save_initiator = __('unknown', 'kmm-timeshift');
+        if (get_post_meta($prod_post->ID, 'save_initiator')) {
+            $save_initiator_live = get_post_meta($prod_post->ID, 'save_initiator')[0];
+        } else {
+            $save_initiator_live = __('unknown', 'kmm-timeshift');
         }
 
         $output = '<table class="widefat fixed">';
@@ -331,8 +356,8 @@ class Core {
         $output .= '<td>' . $prod_post->post_title . '</td>';
         $output .= '<td>' . $prod_post->post_modified . '</td>';
         $output .= '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
-        $output .= '<td>' . $prod_post->save_initiator . '</td>';
-        $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
+        $output .= '<td>' . $save_initiator_live . '</td>';
+        $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
         $output .= '</tr>';
 
         foreach ($rows as $rev) {
@@ -351,9 +376,9 @@ class Core {
 
             // check save initiator
             if (array_key_exists('save_initiator', $timeshift->meta) && array_key_exists(0, $timeshift->meta['save_initiator'])) {
-                $save_initiator = get_the_author_meta('display_name', $timeshift->meta['save_initiator'][0]);
+                $save_initiator_timeshift = $timeshift->meta['save_initiator'][0];
             } else {
-                $save_initiator = __('unknown', 'kmm-timeshift');
+                $save_initiator_timeshift = __('unknown', 'kmm-timeshift');
             }
 
             $output .= '<tr ' . $style . '>';
@@ -361,7 +386,7 @@ class Core {
             $output .= '<td>' . $timeshift->post->post_title . '</td>';
             $output .= '<td>' . $timeshift->post->post_modified . '</td>';
             $output .= '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
-            $output .= '<td>' . $save_initiator . '</td>';
+            $output .= '<td>' . $save_initiator_timeshift . '</td>';
             $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
             $output .= '</tr>';
         }
