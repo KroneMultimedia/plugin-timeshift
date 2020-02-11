@@ -387,7 +387,7 @@ class Core {
             $output .= '<td>' . $timeshift->post->post_modified . '</td>';
             $output .= '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
             $output .= '<td>' . $save_initiator_timeshift . '</td>';
-            $output .= '<td><a href="post.php?post=' . $_GET['post'] . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
+            $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
             $output .= '</tr>';
         }
 
