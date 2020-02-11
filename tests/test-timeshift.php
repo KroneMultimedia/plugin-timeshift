@@ -407,4 +407,103 @@ class TestTimeshift extends \WP_UnitTestCase {
         $mdata = get_metadata('post', $postId);
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
+
+    /**
+     * Integration test when post saved from backend and frontend
+     * 
+     * @test
+     */
+    public function savePostIntegration() {
+        // Prepare user A
+        $displayNameA = 'Test User A';
+        $userA = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+                'display_name' => $displayNameA
+            ]
+        );
+        wp_set_current_user($userA);
+
+        // Prepare post
+        $postTitle = 'Test title';
+        $postId = $this->factory->post->create(
+            [
+                'post_type' => 'article',
+                'post_title' => $postTitle
+            ]
+        );
+        
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Update post by first user
+        update_post_meta($postId, '_edit_last', $userA);
+        $core->krn_pre_post_update($postId);
+
+        // Edit post by another user via frontend
+        $displayNameB = 'Test User B';
+        $userB = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+                'display_name' => $displayNameB
+            ]            
+        );
+        wp_set_current_user($userB);
+
+        // Update post by second user
+        update_post_meta($postId, '_edit_last', $userB);
+        $editSourceB = 'Frontend';
+        $core->krn_pre_post_update($postId, null, $editSourceB);
+
+        // Run test and get HTML to check
+        $post = get_post($postId);
+        $rows = $core->get_next_rows($post);
+        $output = $core->render_metabox_table($post, $rows);
+
+        // Parse resulting HTML
+        $doc = new DOMDocument();
+        // Relax error level ot avoid errors
+        $internalErrors = libxml_use_internal_errors(true);
+        $doc->loadHTML($output);
+        // Restore error level
+        libxml_use_internal_errors($internalErrors);
+
+        // Get <table> tag node
+        $tableNodes = $doc->getElementsByTagName('table');
+        $this->assertEquals(1, $tableNodes->count());
+
+        // Get all <td> tags' nodes
+        $tdNodes = $doc->getElementsByTagName('td');
+        // Should be 12 td tags in total
+        $this->assertEquals(12, $tdNodes->count());
+
+        // Check post titles, edit dates, user names and edit sources
+        $postTitleNode = $tdNodes->item(1);
+        $this->assertEquals($postTitle, $postTitleNode->nodeValue);
+
+        $editedNode = $tdNodes->item(2);
+        $secondEditDate = $editedNode->nodeValue;
+        $this->assertTrue(DateTime::createFromFormat('Y-m-d H:i:s', $secondEditDate) !== false);
+
+        $displayNameNode = $tdNodes->item(3);
+        $this->assertEquals($displayNameB, $displayNameNode->nodeValue);
+
+        $editSourceNode = $tdNodes->item(4);
+        $this->assertEquals($editSourceB, $editSourceNode->nodeValue);
+
+        $postTitleNode = $tdNodes->item(7);
+        $this->assertEquals($postTitle, $postTitleNode->nodeValue);
+
+        $editedNode = $tdNodes->item(8);
+        $firstEditDate = $editedNode->nodeValue;
+        $this->assertTrue(DateTime::createFromFormat('Y-m-d H:i:s', $firstEditDate) !== false);
+        
+        $this->assertLessThanOrEqual($firstEditDate, $secondEditDate);
+
+        $displayNameNode = $tdNodes->item(9);
+        $this->assertEquals($displayNameA, $displayNameNode->nodeValue);
+
+        $editSourceNode = $tdNodes->item(10);
+        $this->assertEquals('Backend', $editSourceNode->nodeValue);
+    }
 }
