@@ -295,9 +295,9 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Mock SUT
         $coreMocked = $this->getMockBuilder(Core::class)
                            ->disableOriginalConstructor()
-                           ->setMethods(['pre_post_update'])
+                           ->setMethods(['krn_pre_post_update'])
                            ->getMock();
-        $coreMocked->expects($this->once())->method('pre_post_update')->with($postID);
+        $coreMocked->expects($this->once())->method('krn_pre_post_update')->with($postID);
 
         // Run test
         $coreMocked->add_attachment($postID);
