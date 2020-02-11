@@ -227,13 +227,12 @@ class Core {
         $this->krn_pre_post_update($postID);
     }
 
-    public function pre_post_update(int $post_ID, array $data = null) { 
+    public function pre_post_update(int $post_ID, array $data = null) {
         $this->krn_pre_post_update($post_ID, $data);
     }
 
     public function krn_pre_post_update(int $post_ID, array $data = null, $editSource = 'Backend') {
-
-        if(apply_filters('krn_timeshift_skip', false, $post_ID, $data, $editSource) == true) {
+        if (true == apply_filters('krn_timeshift_skip', false, $post_ID, $data, $editSource)) {
             return;
         }
         if (wp_is_post_autosave($post_ID)) {
@@ -264,7 +263,7 @@ class Core {
         } else {
             // For unknown last author, clear it. It is a current user now
             $mdata['_edit_last'][0] = '';
-            if ($editSource == 'Frontend') {
+            if ('Frontend' == $editSource) {
                 $lo = get_post_meta($post_ID, '_edit_last', true);
                 $mdata['_edit_last'][0] = $lo;
             }
