@@ -361,57 +361,86 @@ class TestTimeshift extends \WP_UnitTestCase {
         $coreMocked->add_attachment($postId);
     }
 
-    public function provideUpdateTimeshiftVersion() {
-        // First version of timeshift is assigned
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 0;
-        yield [$postId, $mdata, $expectedTimeshiftVer];
-
-        // Increment previous valid version
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        $oldVersion = 2;
-        update_post_meta($postId, '_timeshift_version', $oldVersion);
-        $expectedTimeshiftVer = ++$oldVersion;
-        $mdata = get_metadata('post', $postId);
-        yield [$postId, $mdata, $expectedTimeshiftVer];
-
-        // Version number not numeric
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        update_post_meta($postId, '_timeshift_version', 'not numeric');
-        $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 0;
-        yield [$postId, $mdata, $expectedTimeshiftVer];
-    }
-    
     /**
      * Unit test when first version of timeshift is assigned
      * 
      * @test
-     * @dataProvider provideUpdateTimeshiftVersion
+     * @covers KMM\Timeshift\Core
      */
-    public function updateTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
+    public function updateTimeshiftVersionFirst() {
+        // Prepare post
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        
         // Instantiate SUT
         $core = new Core('i18n');
         
         // Run the test
         $core->pre_post_update($postId);
-
+        
         // Check result
         $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 0;
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
 
     /**
+     * Unit test when incrementing previous valid version
+     * 
+     * @test
+     * @covers KMM\Timeshift\Core
+     */
+    public function updateTimeshiftVersionIncrement() {
+        // Prepare post
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        $oldVersion = 2;
+        update_post_meta($postId, '_timeshift_version', $oldVersion);
+        
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Run the test
+        $core->pre_post_update($postId);
+        
+        // Check result
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = ++$oldVersion;
+        $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
+    }
+    
+    /**
+     * Unit test when version number not numeric
+     * 
+     * @test
+     * @covers KMM\Timeshift\Core
+     */
+    public function updateTimeshiftVersionBad() {
+        // Prepare post
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, 'tesKey1', 'testKey1');
+        update_post_meta($postId, 'tesKey2', 'testKey2');
+        update_post_meta($postId, '_timeshift_version', 'not numeric');
+        
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Run the test
+        $core->pre_post_update($postId);
+        
+        // Check result
+        $expectedTimeshiftVer = 0;
+        $mdata = get_metadata('post', $postId);
+        $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
+    }
+    
+    /**
      * Integration test when post saved from backend and frontend
      * 
      * @test
+     * @covers KMM\Timeshift\Core
      */
     public function savePostIntegration() {
         // Prepare user A
@@ -452,6 +481,10 @@ class TestTimeshift extends \WP_UnitTestCase {
 
         // Update post by second user
         update_post_meta($postId, '_edit_last', $userB);
+        // Need some extra field to reach code storing timeshift record because
+        // it depends on number of metafields
+        update_post_meta($postId, 'test_field_a', 'test_value_a');
+        update_post_meta($postId, 'test_field_b', 'test_value_b');
         $editSourceB = 'Frontend';
         $core->krn_pre_post_update($postId, null, $editSourceB);
 
