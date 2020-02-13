@@ -273,7 +273,7 @@ class Core {
         // Store timeshift version to post's meta
         $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
         // Don't save timeshift when the media was just uploaded, i.e. the post was just created
-        if (count($mdata) > 2) {
+        if (count($mdata) > 4) {
             $mdata['_timeshift_version'][0] = $timeshiftVer;
             $mdata['save_initiator'] = $prevSaveInit;
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
