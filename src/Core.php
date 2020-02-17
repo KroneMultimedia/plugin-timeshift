@@ -224,14 +224,14 @@ class Core {
     public function add_attachment($postID) {
         $post = get_post($postID);
         update_post_meta($postID, '_edit_last', $post->post_author);
-        $this->krn_pre_post_update($postID);
+        $this->krn_pre_post_update($postID, null, 'Backend', false);
     }
 
     public function pre_post_update(int $post_ID, array $data = null) {
         $this->krn_pre_post_update($post_ID, $data);
     }
 
-    public function krn_pre_post_update(int $post_ID, array $data = null, $editSource = 'Backend') {
+    public function krn_pre_post_update(int $post_ID, array $data = null, $editSource = 'Backend', $recordTimeshift = true) {
         if (true == apply_filters('krn_timeshift_skip', false, $post_ID, $data, $editSource)) {
             return;
         }
@@ -272,8 +272,13 @@ class Core {
 
         // Store timeshift version to post's meta
         $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
-        // Don't save timeshift when the media was just uploaded, i.e. the post was just created
-        if (count($mdata) > 4) {
+        
+        // Don't save timeshift record when the article was just created
+        if ($post->post_type == 'article' && $post->post_status == 'auto-draft') {
+            $recordTimeshift = false;
+        }
+        
+        if ($recordTimeshift) {
             $mdata['_timeshift_version'][0] = $timeshiftVer;
             $mdata['save_initiator'] = $prevSaveInit;
             $timeshift = (object) ['post' => $post, 'meta' => $mdata];
