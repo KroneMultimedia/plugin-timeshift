@@ -272,12 +272,12 @@ class Core {
 
         // Store timeshift version to post's meta
         $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
-        
+
         // Don't save timeshift record when the article was just created
-        if ($post->post_type == 'article' && $post->post_status == 'auto-draft') {
+        if ('article' == $post->post_type && 'auto-draft' == $post->post_status) {
             $recordTimeshift = false;
         }
-        
+
         if ($recordTimeshift) {
             $mdata['_timeshift_version'][0] = $timeshiftVer;
             $mdata['save_initiator'] = $prevSaveInit;
