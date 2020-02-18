@@ -465,11 +465,16 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Instantiate SUT
         $core = new Core('i18n');
         
-        // Update post by first user
+        // Set last author who edited the post
         update_post_meta($postId, '_edit_last', $userA);
+        // Update post by first user
         $core->krn_pre_post_update($postId);
 
-        // Edit post by another user via frontend
+        // Required to generate different creation dates for timeshift records
+        // Records are sorted by creation dates. If dates same, sorting inconsistent
+        sleep(1);
+        
+        // Prepare another user
         $displayNameB = 'Test User B';
         $userB = $this->factory->user->create(
             [
@@ -479,64 +484,24 @@ class TestTimeshift extends \WP_UnitTestCase {
         );
         wp_set_current_user($userB);
 
-        // Update post by second user
+        // Update post by second user via frontend
         update_post_meta($postId, '_edit_last', $userB);
-        // Need some extra field to reach code storing timeshift record because
-        // it depends on number of metafields
-        update_post_meta($postId, 'test_field_a', 'test_value_a');
-        update_post_meta($postId, 'test_field_b', 'test_value_b');
         $editSourceB = 'Frontend';
         $core->krn_pre_post_update($postId, null, $editSourceB);
 
-        // Run test and get HTML to check
         $post = get_post($postId);
+        // Get timeshift records
         $rows = $core->get_next_rows($post);
+        // Run SUT and get HTML to check
         $output = $core->render_metabox_table($post, $rows);
 
-        // Parse resulting HTML
-        $doc = new DOMDocument();
-        // Relax error level ot avoid errors
-        $internalErrors = libxml_use_internal_errors(true);
-        $doc->loadHTML($output);
-        // Restore error level
-        libxml_use_internal_errors($internalErrors);
+        // Remove dates from output
+        $output = preg_replace('/<td>\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})<\/td>/', '', $output);
+        // Remove Gravatar IDs
+        $output = preg_replace('/http:\/\/\d.gravatar/', '', $output);
 
-        // Get <table> tag node
-        $tableNodes = $doc->getElementsByTagName('table');
-        $this->assertEquals(1, $tableNodes->count());
-
-        // Get all <td> tags' nodes
-        $tdNodes = $doc->getElementsByTagName('td');
-        // Should be 12 td tags in total
-        $this->assertEquals(12, $tdNodes->count());
-
-        // Check post titles, edit dates, user names and edit sources
-        $postTitleNode = $tdNodes->item(1);
-        $this->assertEquals($postTitle, $postTitleNode->nodeValue);
-
-        $editedNode = $tdNodes->item(2);
-        $secondEditDate = $editedNode->nodeValue;
-        $this->assertTrue(DateTime::createFromFormat('Y-m-d H:i:s', $secondEditDate) !== false);
-
-        $displayNameNode = $tdNodes->item(3);
-        $this->assertEquals($displayNameB, $displayNameNode->nodeValue);
-
-        $editSourceNode = $tdNodes->item(4);
-        $this->assertEquals($editSourceB, $editSourceNode->nodeValue);
-
-        $postTitleNode = $tdNodes->item(7);
-        $this->assertEquals($postTitle, $postTitleNode->nodeValue);
-
-        $editedNode = $tdNodes->item(8);
-        $firstEditDate = $editedNode->nodeValue;
-        $this->assertTrue(DateTime::createFromFormat('Y-m-d H:i:s', $firstEditDate) !== false);
-        
-        $this->assertLessThanOrEqual($firstEditDate, $secondEditDate);
-
-        $displayNameNode = $tdNodes->item(9);
-        $this->assertEquals($displayNameA, $displayNameNode->nodeValue);
-
-        $editSourceNode = $tdNodes->item(10);
-        $this->assertEquals('Backend', $editSourceNode->nodeValue);
+        // Compare output
+        $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered.html');
+        $this->assertEquals($expectedOutput, $output);
     }
 }
