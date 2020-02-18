@@ -317,31 +317,6 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * Semi-integration test. Testing that timeshift not stored
-     * when adding attachment
-     * 
-     * @test
-     * @preserveGlobalState disabled
-     */
-    public function add_attachment_integr_store_timeshift() {
-        // Prepare input
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        $post = get_post($postId);
-
-        // Instantiate SUT
-        $core = new Core('i18n');
-
-        // Run test
-        $core->add_attachment($postId);
-
-        // Check that timeshift version was NOT stored
-        $output = $core->get_next_rows($post);
-        $expectedOutput = [];
-        $this->assertEquals($expectedOutput, $output);
-    }
-
-    /**
-     * Semi-integration test. Mainly testing pre_post_update() when
-     * timeshift not stored
      * 
      * @test
      * @preserveGlobalState disabled
@@ -349,8 +324,6 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function add_attachment_integr_skip_timeshift() {
         // Prepare input
         $postId = $this->factory->post->create(['post_type' => 'article']);
-        // Add just one key to meta which is not enough to run storeTimeshift()
-        update_post_meta($postId, 'tesKey1', 'testKey1');
 
         // Mock SUT
         $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
@@ -371,8 +344,6 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function updateTimeshiftVersionFirst() {
         // Prepare post
         $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
         
         // Instantiate SUT
         $core = new Core('i18n');
@@ -396,8 +367,6 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function updateTimeshiftVersionIncrement() {
         // Prepare post
         $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
         $oldVersion = 2;
         update_post_meta($postId, '_timeshift_version', $oldVersion);
         
@@ -423,8 +392,6 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function updateTimeshiftVersionBad() {
         // Prepare post
         $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
         update_post_meta($postId, '_timeshift_version', 'not numeric');
         
         // Instantiate SUT
