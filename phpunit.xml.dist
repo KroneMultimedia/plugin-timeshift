@@ -8,7 +8,6 @@
         convertWarningsToExceptions="true"
         printerClass="Test\PrettyPrinter"
         printerFile="tests/phpunit/PrettyPrinter.php"
-        processIsolation = "true"
 >
     <testsuites>
         <testsuite name="unit">
