@@ -27,11 +27,11 @@
     "secure-http": false
   },
   "require-dev": {
-    "php-mock/php-mock": "^2.0",
+    "php-mock/php-mock": "^2.1",
     "friendsofphp/php-cs-fixer": "^2.11",
     "phpstan/phpstan": "^0.9.2",
     "phpstan/phpstan-phpunit": "^0.9.4",
-    "phpunit/phpunit": "^6.0",
+    "phpunit/phpunit": "^7.0",
     "scrutinizer/ocular": "^1.5"
   }
 }

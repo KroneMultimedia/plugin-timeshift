@@ -26,6 +26,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function hasTimeshiftsTrue() {
         $post_id = $this->factory->post->create(['post_type' => 'article']);
@@ -56,6 +57,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function hasTimeshiftsFalse() {
         $post_id = $this->factory->post->create(['post_type' => 'article']);
@@ -82,6 +84,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function timeshiftVisible() {
         $r = $this->core->timeshiftVisible();
@@ -97,6 +100,7 @@ class TestTimeshift extends \WP_UnitTestCase {
      * Integration test checking that filter krn_timeshift_visible is triggered
      * 
      * @test
+     * @preserveGlobalState disabled
      * @dataProvider provideTimeshiftVisibleFalse
      */
     public function timeshiftVisibleIntegr($expectedResult) {
@@ -112,6 +116,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function add_metabox_no_post() {
         $r = $this->core->add_metabox();
@@ -120,6 +125,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function timeshift_metabox_no_post() {
         $r = $this->core->timeshift_metabox();
@@ -128,6 +134,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @1test1 - FIXME
+     * @preserveGlobalState disabled
      */
     public function timeshift_metabox() {
         $post_id = $this->factory->post->create(['post_type' => 'article']);
@@ -167,6 +174,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function update_post_metadata() {
         $post_id = $this->factory->post->create(['post_type' => 'article']);
@@ -181,6 +189,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function inject_timeshift_no_timeshift() {
         $r = $this->core->inject_timeshift(null);
@@ -189,6 +198,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function inject_timeshift() {
         $_GET['timeshift'] = 23;
@@ -216,6 +226,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function checkTable() {
         $post_id = $this->factory->post->create(['post_type' => 'article']);
@@ -240,6 +251,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function storeTimeshift() {
         $table_name = 'wptesttimeshift_article';
@@ -271,10 +283,10 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * @test
+     * @preserveGlobalState disabled
      */
     public function pre_post_update_auto_draft() {
         $post_id = $this->factory->post->create(['post_type' => 'article', 'post_status' => 'auto_draft']);
-
         $r = $this->core->pre_post_update($post_id, null);
         $this->assertNull($r);
     }
@@ -287,70 +299,31 @@ class TestTimeshift extends \WP_UnitTestCase {
      * Unit test
      * 
      * @test
+     * @preserveGlobalState disabled
      */
     public function add_attachment_unit() {
         // prepare input
         $postID = $this->factory->post->create(['post_type' => 'article']);
-        
         // Mock SUT
         $coreMocked = $this->getMockBuilder(Core::class)
                            ->disableOriginalConstructor()
-                           ->setMethods(['pre_post_update'])
+                           ->setMethods(['krn_pre_post_update'])
                            ->getMock();
-        $coreMocked->expects($this->once())->method('pre_post_update')->with($postID);
+        $coreMocked->expects($this->once())->method('krn_pre_post_update')->with($postID);
 
         // Run test
         $coreMocked->add_attachment($postID);
     }
 
     /**
-     * Semi-integration test. Mainly testing pre_post_update() when
-     * timeshift stored
+     * Semi-integration test. Testing that timeshift not stored
      * 
      * @test
-     */
-    public function add_attachment_integr_store_timeshift() {
-        // Prepare input
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        $post = get_post($postId);
-        // Add two keys to meta which are enough to run storeTimeshift()
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        update_post_meta($postId, '_edit_last', 0);
-        update_post_meta($postId, '_timeshift_version', 0);
-        $mdata = get_metadata('post', $postId);
-
-        // Prepare timeshift
-        $timeshift = (object) [
-            'post' => $post,
-            'meta' => $mdata
-        ];
-
-        // Instantiate SUT
-        $core = new Core('i18n');
-
-        // Run test
-        $core->add_attachment($postId);
-
-        // Check that timeshift version was stored
-        $allTimeshifts = $core->get_next_rows($post);
-        $timeshift = unserialize($allTimeshifts[0]->post_payload);
-        $timeshiftVersion = $timeshift->meta['_timeshift_version'][0];
-        $expectedVersion = 0;
-        $this->assertEquals($expectedVersion, $timeshiftVersion);
-    }
-
-    /**
-     * Semi-integration test. Mainly testing pre_post_update() when
-     * timeshift not stored
-     * 
-     * @test
+     * @preserveGlobalState disabled
      */
     public function add_attachment_integr_skip_timeshift() {
         // Prepare input
         $postId = $this->factory->post->create(['post_type' => 'article']);
-        // Add just one key to meta which is not enough to run storeTimeshift()
-        update_post_meta($postId, 'tesKey1', 'testKey1');
 
         // Mock SUT
         $coreMocked = $this->getMockBuilder(Core::class)->setConstructorArgs(['i18n'])
@@ -361,50 +334,151 @@ class TestTimeshift extends \WP_UnitTestCase {
         $coreMocked->add_attachment($postId);
     }
 
-    public function provideUpdateTimeshiftVersion() {
-        // First version of timeshift is assigned
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 0;
-        yield [$postId, $mdata, $expectedTimeshiftVer];
-
-        // Increment previous valid version
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        $oldVersion = 2;
-        update_post_meta($postId, '_timeshift_version', $oldVersion);
-        $expectedTimeshiftVer = ++$oldVersion;
-        $mdata = get_metadata('post', $postId);
-        yield [$postId, $mdata, $expectedTimeshiftVer];
-
-        // Version number not numeric
-        $postId = $this->factory->post->create(['post_type' => 'article']);
-        update_post_meta($postId, 'tesKey1', 'testKey1');
-        update_post_meta($postId, 'tesKey2', 'testKey2');
-        update_post_meta($postId, '_timeshift_version', 'not numeric');
-        $mdata = get_metadata('post', $postId);
-        $expectedTimeshiftVer = 0;
-        yield [$postId, $mdata, $expectedTimeshiftVer];
-    }
-    
     /**
      * Unit test when first version of timeshift is assigned
      * 
      * @test
-     * @dataProvider provideUpdateTimeshiftVersion
+     * @preserveGlobalState disabled
+     * @covers KMM\Timeshift\Core
      */
-    public function updateTimeshiftVersion($postId, $mdata, $expectedTimeshiftVer) {
+    public function updateTimeshiftVersionFirst() {
+        // Prepare post
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        
         // Instantiate SUT
         $core = new Core('i18n');
         
         // Run the test
         $core->pre_post_update($postId);
-
+        
         // Check result
         $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = 0;
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
+    }
+
+    /**
+     * Unit test when incrementing previous valid version
+     * 
+     * @test
+     * @preserveGlobalState disabled
+     * @covers KMM\Timeshift\Core
+     */
+    public function updateTimeshiftVersionIncrement() {
+        // Prepare post
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        $oldVersion = 2;
+        update_post_meta($postId, '_timeshift_version', $oldVersion);
+        
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Run the test
+        $core->pre_post_update($postId);
+        
+        // Check result
+        $mdata = get_metadata('post', $postId);
+        $expectedTimeshiftVer = ++$oldVersion;
+        $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
+    }
+    
+    /**
+     * Unit test when version number not numeric
+     * 
+     * @test
+     * @preserveGlobalState disabled
+     * @covers KMM\Timeshift\Core
+     */
+    public function updateTimeshiftVersionBad() {
+        // Prepare post
+        $postId = $this->factory->post->create(['post_type' => 'article']);
+        update_post_meta($postId, '_timeshift_version', 'not numeric');
+        
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Run the test
+        $core->pre_post_update($postId);
+        
+        // Check result
+        $expectedTimeshiftVer = 0;
+        $mdata = get_metadata('post', $postId);
+        $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
+    }
+    
+    /**
+     * Integration test when post saved from backend and frontend
+     * 
+     * @test
+     * @preserveGlobalState disabled
+     * @covers KMM\Timeshift\Core
+     */
+    public function savePostIntegration() {
+        // Prepare user A
+        $displayNameA = 'Test User A';
+        $userA = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+                'display_name' => $displayNameA
+            ]
+        );
+        wp_set_current_user($userA);
+
+        // Prepare post
+        $postTitle = 'Test title';
+        $postId = $this->factory->post->create(
+            [
+                'post_type' => 'article',
+                'post_title' => $postTitle
+            ]
+        );
+
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Set last author who edited the post
+        update_post_meta($postId, '_edit_last', $userA);
+        // Update post by first user
+        $core->krn_pre_post_update($postId);
+
+        // Required to generate different creation dates for timeshift records
+        // Records are sorted by creation dates. If dates same, sorting inconsistent
+        sleep(1);
+        
+        // Prepare another user
+        $displayNameB = 'Test User B';
+        $userB = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+                'display_name' => $displayNameB
+            ]            
+        );
+        wp_set_current_user($userB);
+
+        // Update post by second user via frontend
+        update_post_meta($postId, '_edit_last', $userB);
+        $editSourceB = 'Frontend';
+        $core->krn_pre_post_update($postId, null, $editSourceB);
+
+        $post = get_post($postId);
+        // Get timeshift records
+        $rows = $core->get_next_rows($post);
+        // Run SUT and get HTML to check
+        $output = $core->render_metabox_table($post, $rows);
+
+        // Remove dates from output
+        $output = preg_replace('/<td>\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})<\/td>/', '', $output);
+        // Remove Gravatar IDs
+        $output = preg_replace('/(?=\d+.gravatar.com)\d+/', '', $output);
+        // Remove timeshift version
+        $output = preg_replace('/(?<=timeshift=)\d+/', '', $output);
+        // Remove post ID
+        $output = preg_replace('/(?<=\?post=)\d+/', '', $output);
+        // Replace Gravatar hash
+        $output = preg_replace('/(?<=gravatar.com\/avatar\/)\w{32}/', '', $output);
+        
+        // Compare output
+        $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered.html');
+        $this->assertEquals($expectedOutput, $output);
     }
 }
