@@ -469,7 +469,13 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Remove dates from output
         $output = preg_replace('/<td>\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})<\/td>/', '', $output);
         // Remove Gravatar IDs
-        $output = preg_replace('/http:\/\/\d.gravatar/', '', $output);
+        $output = preg_replace('/(?=\d+.gravatar.com)\d+/', '', $output);
+        // Remove timeshift version
+        $output = preg_replace('/(?<=timeshift=)\d+/', '', $output);
+        // Remove post ID
+        $output = preg_replace('/(?<=\?post=)\d+/', '', $output);
+        // Replace Gravatar hash
+        $output = preg_replace('/(?<=gravatar.com\/avatar\/)\w{32}/', '', $output);
         
         // Compare output
         $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered.html');
