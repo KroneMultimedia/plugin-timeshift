@@ -1,4 +1,4 @@
-# KMM Timeshift
+f# KMM Timeshift
 msgid ""
 msgstr ""
 "Project-Id-Version: KMM Timeshift\n"
@@ -20,6 +20,10 @@ msgstr ""
 msgid "Timeshift"
 msgstr "Zurück in die Zukunft"
 
+#: Core.php:312
+msgid "unknown"
+msgstr "unbekannt"
+
 #: Core.php:70
 msgid "Title"
 msgstr "Titel"
@@ -31,6 +35,10 @@ msgstr "Speicherzeitpunkt"
 #: Core.php:72
 msgid "Author"
 msgstr "Autor"
+
+#: Core.php:322
+msgid "Save-initiator"
+msgstr "Speicher-initiator"
 
 #: Core.php:73
 msgid "Actions"
