@@ -379,8 +379,7 @@ class Core {
             }
 
             // sometimes _edit_last is defined in a wrong way
-            if (is_array($timeshift->meta['_edit_last']) &&
-            array_key_exists(0, $timeshift->meta['_edit_last'])) {
+            if (is_array($timeshift->meta['_edit_last']) && count($timeshift->meta['_edit_last']) > 0) {
                 $avatar = get_avatar($timeshift->meta['_edit_last'][0], 30);
                 $authorName = get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]);
             } else {
@@ -389,7 +388,7 @@ class Core {
             }
 
             // check save initiator
-            if (array_key_exists('save_initiator', $timeshift->meta) && array_key_exists(0, $timeshift->meta['save_initiator'])) {
+            if (array_key_exists('save_initiator', $timeshift->meta) && count($timeshift->meta['save_initiator']) > 0) {
                 $save_initiator_timeshift = $timeshift->meta['save_initiator'][0];
             } else {
                 $save_initiator_timeshift = __('unknown', 'kmm-timeshift');
