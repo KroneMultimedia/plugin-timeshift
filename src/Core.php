@@ -373,23 +373,32 @@ class Core {
                 $style = 'style="font-style:italic;background-color: lightblue;"';
             }
 
-            // some images dont have _edit_last field
+            // some images don't have _edit_last field
             if (! isset($timeshift->meta['_edit_last']) || is_null($timeshift->meta['_edit_last'])) {
                 $timeshift->meta['_edit_last'] = 0;
             }
 
+            // sometimes _edit_last is defined in a wrong way
+            if (is_array($timeshift->meta['_edit_last']) && count($timeshift->meta['_edit_last']) > 0) {
+                $avatar = get_avatar($timeshift->meta['_edit_last'][0], 30);
+                $authorName = get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]);
+            } else {
+                $avatar = 'unknown';
+                $authorName = __('unknown', 'kmm-timeshift');
+            }
+
             // check save initiator
-            if (array_key_exists('save_initiator', $timeshift->meta) && array_key_exists(0, $timeshift->meta['save_initiator'])) {
+            if (array_key_exists('save_initiator', $timeshift->meta) && count($timeshift->meta['save_initiator']) > 0) {
                 $save_initiator_timeshift = $timeshift->meta['save_initiator'][0];
             } else {
                 $save_initiator_timeshift = __('unknown', 'kmm-timeshift');
             }
 
             $output .= '<tr ' . $style . '>';
-            $output .= '<td>' . get_avatar($timeshift->meta['_edit_last'][0], 30) . '</td>';
+            $output .= '<td>' . $avatar . '</td>';
             $output .= '<td>' . $timeshift->post->post_title . '</td>';
             $output .= '<td>' . $timeshift->post->post_modified . '</td>';
-            $output .= '<td>' . get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]) . '</td>';
+            $output .= '<td>' . $authorName . '</td>';
             $output .= '<td>' . $save_initiator_timeshift . '</td>';
             $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
             $output .= '</tr>';

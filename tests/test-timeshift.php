@@ -407,6 +407,24 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
     
     /**
+     * Helper method
+     */
+    public function cleanHtml($html) {
+        // Remove dates
+        $html = preg_replace('/<td>\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})<\/td>/', '', $html);
+        // Remove Gravatar IDs
+        $html = preg_replace('/(?=\d+.gravatar.com)\d+/', '', $html);
+        // Remove timeshift version
+        $html = preg_replace('/(?<=timeshift=)\d+/', '', $html);
+        // Remove post ID
+        $html = preg_replace('/(?<=\?post=)\d+/', '', $html);
+        // Replace Gravatar hash
+        $html = preg_replace('/(?<=gravatar.com\/avatar\/)\w{32}/', '', $html);
+
+        return $html;
+    }
+
+    /**
      * Integration test when post saved from backend and frontend
      * 
      * @test
@@ -466,19 +484,62 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Run SUT and get HTML to check
         $output = $core->render_metabox_table($post, $rows);
 
-        // Remove dates from output
-        $output = preg_replace('/<td>\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})<\/td>/', '', $output);
-        // Remove Gravatar IDs
-        $output = preg_replace('/(?=\d+.gravatar.com)\d+/', '', $output);
-        // Remove timeshift version
-        $output = preg_replace('/(?<=timeshift=)\d+/', '', $output);
-        // Remove post ID
-        $output = preg_replace('/(?<=\?post=)\d+/', '', $output);
-        // Replace Gravatar hash
-        $output = preg_replace('/(?<=gravatar.com\/avatar\/)\w{32}/', '', $output);
-        
+        $output = $this->cleanHtml($output);
+
         // Compare output
         $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered.html');
         $this->assertEquals($expectedOutput, $output);
     }
+
+    /**
+     * Unit test to check getting undefined avatar and author name from meta
+     * 
+     * @test
+     * @preserveGlobalState disabled
+     * @covers KMM\Timeshift\Core
+     */
+    public function render_metabox_table_bad_edit_last() {
+        // Prepare user
+        $displayName = 'Test User';
+        $user = $this->factory->user->create(
+            [
+                'role' => 'administrator',
+                'display_name' => $displayName
+            ]
+        );
+        wp_set_current_user($user);
+
+        // Prepare post
+        $postTitle = 'Test title';
+        $postId = $this->factory->post->create(
+            [
+                'post_type' => 'article',
+                'post_title' => $postTitle
+            ]
+        );
+
+        // Instantiate SUT
+        $core = new Core('i18n');
+        
+        // Save timeshift record
+        $core->krn_pre_post_update($postId);
+
+        $post = get_post($postId);
+        // Get timeshift records
+        $rows = $core->get_next_rows($post);
+
+        // Essence of test. Break _edit_last for the first timeshift entry
+        $payload = unserialize($rows[0]->post_payload);
+        $payload->meta['_edit_last'] = null;
+        $rows[0]->post_payload = serialize($payload);
+        
+        // Run SUT and get HTML to check
+        $output = $core->render_metabox_table($post, $rows);
+
+        // Remove variable data
+        $output = $this->cleanHtml($output);
+
+        $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered-bad-edit-last.html', $output);
+        $this->assertEquals($expectedOutput, $output);
+    }    
 }
