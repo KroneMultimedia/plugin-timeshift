@@ -95,10 +95,10 @@ class TestTimeshift extends \WP_UnitTestCase {
         yield [true];
         yield [false];
     }
-    
+
     /**
      * Integration test checking that filter krn_timeshift_visible is triggered
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      * @dataProvider provideTimeshiftVisibleFalse
@@ -297,7 +297,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * Unit test
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      */
@@ -317,7 +317,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * Semi-integration test. Testing that timeshift not stored
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      */
@@ -336,7 +336,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * Unit test when first version of timeshift is assigned
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      * @covers KMM\Timeshift\Core
@@ -344,13 +344,13 @@ class TestTimeshift extends \WP_UnitTestCase {
     public function updateTimeshiftVersionFirst() {
         // Prepare post
         $postId = $this->factory->post->create(['post_type' => 'article']);
-        
+
         // Instantiate SUT
         $core = new Core('i18n');
-        
+
         // Run the test
         $core->pre_post_update($postId);
-        
+
         // Check result
         $mdata = get_metadata('post', $postId);
         $expectedTimeshiftVer = 0;
@@ -359,7 +359,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * Unit test when incrementing previous valid version
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      * @covers KMM\Timeshift\Core
@@ -369,22 +369,22 @@ class TestTimeshift extends \WP_UnitTestCase {
         $postId = $this->factory->post->create(['post_type' => 'article']);
         $oldVersion = 2;
         update_post_meta($postId, '_timeshift_version', $oldVersion);
-        
+
         // Instantiate SUT
         $core = new Core('i18n');
-        
+
         // Run the test
         $core->pre_post_update($postId);
-        
+
         // Check result
         $mdata = get_metadata('post', $postId);
         $expectedTimeshiftVer = ++$oldVersion;
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
-    
+
     /**
      * Unit test when version number not numeric
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      * @covers KMM\Timeshift\Core
@@ -393,19 +393,19 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Prepare post
         $postId = $this->factory->post->create(['post_type' => 'article']);
         update_post_meta($postId, '_timeshift_version', 'not numeric');
-        
+
         // Instantiate SUT
         $core = new Core('i18n');
-        
+
         // Run the test
         $core->pre_post_update($postId);
-        
+
         // Check result
         $expectedTimeshiftVer = 0;
         $mdata = get_metadata('post', $postId);
         $this->assertEquals($expectedTimeshiftVer, $mdata['_timeshift_version'][0]);
     }
-    
+
     /**
      * Helper method
      */
@@ -426,7 +426,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
     /**
      * Integration test when post saved from backend and frontend
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      * @covers KMM\Timeshift\Core
@@ -453,7 +453,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
         // Instantiate SUT
         $core = new Core('i18n');
-        
+
         // Set last author who edited the post
         update_post_meta($postId, '_edit_last', $userA);
         // Update post by first user
@@ -462,14 +462,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         // Required to generate different creation dates for timeshift records
         // Records are sorted by creation dates. If dates same, sorting inconsistent
         sleep(1);
-        
+
         // Prepare another user
         $displayNameB = 'Test User B';
         $userB = $this->factory->user->create(
             [
                 'role' => 'administrator',
                 'display_name' => $displayNameB
-            ]            
+            ]
         );
         wp_set_current_user($userB);
 
@@ -487,13 +487,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $output = $this->cleanHtml($output);
 
         // Compare output
+
         $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered.html');
         $this->assertEquals($expectedOutput, $output);
     }
 
     /**
      * Unit test to check getting undefined avatar and author name from meta
-     * 
+     *
      * @test
      * @preserveGlobalState disabled
      * @covers KMM\Timeshift\Core
@@ -520,7 +521,7 @@ class TestTimeshift extends \WP_UnitTestCase {
 
         // Instantiate SUT
         $core = new Core('i18n');
-        
+
         // Save timeshift record
         $core->krn_pre_post_update($postId);
 
@@ -532,14 +533,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $payload = unserialize($rows[0]->post_payload);
         $payload->meta['_edit_last'] = null;
         $rows[0]->post_payload = serialize($payload);
-        
+
         // Run SUT and get HTML to check
         $output = $core->render_metabox_table($post, $rows);
 
         // Remove variable data
         $output = $this->cleanHtml($output);
 
-        $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered-bad-edit-last.html', $output);
+        $expectedOutput = file_get_contents(__DIR__ . '/fixtures/box-rendered-bad-edit-last.html');
         $this->assertEquals($expectedOutput, $output);
-    }    
+    }
 }
