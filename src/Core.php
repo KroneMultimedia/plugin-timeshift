@@ -93,7 +93,7 @@ class Core {
 
     public function add_filters() {
         // When revisioned post meta has changed, trigger a revision save.
-        //add_filter('wp_save_post_revision_post_has_changed', [$this, '_wp_check_revisioned_meta_fields_have_changed'], 10, 3);
+        // add_filter('wp_save_post_revision_post_has_changed', [$this, '_wp_check_revisioned_meta_fields_have_changed'], 10, 3);
 
         add_filter('get_post_metadata', [$this, 'inject_metadata_timeshift'], 1, 4);
         add_filter('update_post_metadata', [$this, 'update_post_metadata'], 1, 5);
@@ -155,6 +155,7 @@ class Core {
         add_action('krn_timeshift_create_snapshot', [$this, 'create_snapshot'], 1, 2);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_pagination_timeshift', [$this, 'timeshift_metabox']);
+        add_action('before_delete_post', [$this, 'before_delete'], 1, 1);
     }
 
     public function admin_notice() {
@@ -229,6 +230,20 @@ class Core {
 
     public function pre_post_update(int $post_ID, array $data = null) {
         $this->krn_pre_post_update($post_ID, $data);
+    }
+
+    public function before_delete(int $post_ID, $post = null) {
+        $mdata = get_metadata('post', $post_ID);
+        $post = get_post($post_ID);
+
+        unset($mdata['_edit_lock']);
+
+        // Store timeshift version to post's meta
+        $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
+        $mdata['_timeshift_version'][0] = $timeshiftVer;
+        $mdata['KRN_MODE'] = 'DELETE';
+        $timeshift = (object) ['post' => $post, 'meta' => $mdata];
+        $this->storeTimeshift($timeshift);
     }
 
     public function krn_pre_post_update(int $post_ID, array $data = null, $editSource = 'Backend', $recordTimeshift = true) {

@@ -36,14 +36,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $objArr = (object) $objArr;
         $arr = [$objArr];
 
-        //Mock the DB
+        // Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
             ->setMethods(['get_charset_collate', 'get_results'])
             ->getMock();
 
         $mock->prefix = 'wptest';
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->once())
             ->method('get_results')
             ->with('select count(1) as amount from ' . $table_name . ' where post_id=' . $post_id)
@@ -64,14 +64,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $post_type = get_post_type($post_id);
         $table_name = 'wptesttimeshift_article';
 
-        //Mock the DB
+        // Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
             ->setMethods(['get_charset_collate', 'get_results'])
             ->getMock();
 
         $mock->prefix = 'wptest';
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->once())
             ->method('get_results')
             ->with('select count(1) as amount from ' . $table_name . ' where post_id=' . $post_id);
@@ -97,7 +97,7 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Integration test checking that filter krn_timeshift_visible is triggered
+     * Integration test checking that filter krn_timeshift_visible is triggered.
      *
      * @test
      * @preserveGlobalState disabled
@@ -105,7 +105,7 @@ class TestTimeshift extends \WP_UnitTestCase {
      */
     public function timeshiftVisibleIntegr($expectedResult) {
         // Register the filter
-        add_filter('krn_timeshift_visible', function() use ($expectedResult) {
+        add_filter('krn_timeshift_visible', function () use ($expectedResult) {
             return $expectedResult;
         });
 
@@ -144,14 +144,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $table_name = 'wptesttimeshift_article';
         $obj = new stdClass();
 
-        //Mock the DB
+        // Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
             ->setMethods(['get_results', 'get_var'])
             ->getMock();
 
         $mock->prefix = 'wptest';
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->exactly(2))
             ->method('get_results')
             ->withConsecutive([
@@ -160,7 +160,7 @@ class TestTimeshift extends \WP_UnitTestCase {
               ])
             ->willReturnOnConsecutiveCalls([$obj, (object) ['cnt' => 1]]);
 
-        //Expect query sent
+        // Expect query sent
         $table_name = 'wptestpostmeta';
         $mock->expects($this->once())
             ->method('get_var')
@@ -207,14 +207,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $post = get_post($post_id);
         $table_name = 'wptesttimeshift_article';
 
-        //Mock the DB
+        // Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
         ->setMethods(['get_results'])
         ->getMock();
 
         $mock->prefix = 'wptest';
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->once())
             ->method('get_results')
             ->with("select * from $table_name where id=" . intval($_GET['timeshift']));
@@ -232,14 +232,14 @@ class TestTimeshift extends \WP_UnitTestCase {
         $post_id = $this->factory->post->create(['post_type' => 'article']);
         $post_type = get_post_type($post_id);
 
-        //Mock the DB
+        // Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
             ->setMethods(['get_charset_collate'])
             ->getMock();
 
         $mock->prefix = 'wptest';
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->once())
             ->method('get_charset_collate');
 
@@ -260,19 +260,19 @@ class TestTimeshift extends \WP_UnitTestCase {
         $timeshift = ['post' => $post];
         $timeshift = (object) $timeshift;
 
-        //Mock the DB
+        // Mock the DB
         $mock = $this->getMockBuilder('KMM\\Timeshift\\KMM\\TimeshiftTestDB')
             ->setMethods(['prepare', 'query'])
             ->getMock();
 
         $mock->prefix = 'wptest';
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->once())
         ->method('prepare')
         ->with("insert into $table_name (post_id, post_payload) VALUES(%d, '%s')", $timeshift->post->ID, serialize($timeshift));
 
-        //Expect query sent
+        // Expect query sent
         $mock->expects($this->once())
             ->method('query');
 
@@ -296,7 +296,7 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Unit test
+     * Unit test.
      *
      * @test
      * @preserveGlobalState disabled
@@ -316,7 +316,7 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Semi-integration test. Testing that timeshift not stored
+     * Semi-integration test. Testing that timeshift not stored.
      *
      * @test
      * @preserveGlobalState disabled
@@ -335,11 +335,11 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Unit test when first version of timeshift is assigned
+     * Unit test when first version of timeshift is assigned.
      *
      * @test
      * @preserveGlobalState disabled
-     * @covers KMM\Timeshift\Core
+     * @covers \KMM\Timeshift\Core
      */
     public function updateTimeshiftVersionFirst() {
         // Prepare post
@@ -358,11 +358,11 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Unit test when incrementing previous valid version
+     * Unit test when incrementing previous valid version.
      *
      * @test
      * @preserveGlobalState disabled
-     * @covers KMM\Timeshift\Core
+     * @covers \KMM\Timeshift\Core
      */
     public function updateTimeshiftVersionIncrement() {
         // Prepare post
@@ -383,11 +383,11 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Unit test when version number not numeric
+     * Unit test when version number not numeric.
      *
      * @test
      * @preserveGlobalState disabled
-     * @covers KMM\Timeshift\Core
+     * @covers \KMM\Timeshift\Core
      */
     public function updateTimeshiftVersionBad() {
         // Prepare post
@@ -407,7 +407,7 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Helper method
+     * Helper method.
      */
     public function cleanHtml($html) {
         // Remove dates
@@ -425,11 +425,11 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Integration test when post saved from backend and frontend
+     * Integration test when post saved from backend and frontend.
      *
      * @test
      * @preserveGlobalState disabled
-     * @covers KMM\Timeshift\Core
+     * @covers \KMM\Timeshift\Core
      */
     public function savePostIntegration() {
         // Prepare user A
@@ -437,7 +437,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $userA = $this->factory->user->create(
             [
                 'role' => 'administrator',
-                'display_name' => $displayNameA
+                'display_name' => $displayNameA,
             ]
         );
         wp_set_current_user($userA);
@@ -447,7 +447,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $postId = $this->factory->post->create(
             [
                 'post_type' => 'article',
-                'post_title' => $postTitle
+                'post_title' => $postTitle,
             ]
         );
 
@@ -468,7 +468,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $userB = $this->factory->user->create(
             [
                 'role' => 'administrator',
-                'display_name' => $displayNameB
+                'display_name' => $displayNameB,
             ]
         );
         wp_set_current_user($userB);
@@ -493,11 +493,11 @@ class TestTimeshift extends \WP_UnitTestCase {
     }
 
     /**
-     * Unit test to check getting undefined avatar and author name from meta
+     * Unit test to check getting undefined avatar and author name from meta.
      *
      * @test
      * @preserveGlobalState disabled
-     * @covers KMM\Timeshift\Core
+     * @covers \KMM\Timeshift\Core
      */
     public function render_metabox_table_bad_edit_last() {
         // Prepare user
@@ -505,7 +505,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $user = $this->factory->user->create(
             [
                 'role' => 'administrator',
-                'display_name' => $displayName
+                'display_name' => $displayName,
             ]
         );
         wp_set_current_user($user);
@@ -515,7 +515,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $postId = $this->factory->post->create(
             [
                 'post_type' => 'article',
-                'post_title' => $postTitle
+                'post_title' => $postTitle,
             ]
         );
 
