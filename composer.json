@@ -28,12 +28,15 @@
   "config": {
     "gitlab-domains": ["gitlab.krone.at"],
     "github-protocols": ["https"],
-    "secure-http": false
+    "secure-http": false,
+    "allow-plugins": {
+      "composer/installers": true
+    }
   },
   "require-dev": {
     "php-mock/php-mock": "^2.1",
-    "friendsofphp/php-cs-fixer": "^2.11",
-    "phpunit/phpunit": "dev-add-compatibility-with-php8-to-phpunit-7",
+    "friendsofphp/php-cs-fixer": "^3.1",
+    "phpunit/phpunit": "dev-add-compatibility-with-php8-to-phpunit-7 as 7.*.x-dev",
     "scrutinizer/ocular": "^1.5"
   }
 }
