@@ -18,7 +18,7 @@ class TimeshiftTestDB {
 }
 
 class TestTimeshift extends \WP_UnitTestCase {
-    public function setUp() {
+    public function setUp(): void {
         // setup a rest server
         parent::setUp();
         $this->core = new Core('i18n');
@@ -291,7 +291,7 @@ class TestTimeshift extends \WP_UnitTestCase {
         $this->assertNull($r);
     }
 
-    public function tearDown() {
+    public function tearDown(): void {
         parent::tearDown();
     }
 
