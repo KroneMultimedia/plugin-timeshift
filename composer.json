@@ -4,11 +4,6 @@
   "support": {
     "src": "http://gitlab.krone.at/WordPress/plugin-timeshift"
   },
-"repositories": [{     
-      "type": "gitlab",
-      "url": "http://gitlab.krone.at/KRN/phpunitwp.git"
-    }
-],
   "extra": {
     "installer-name": "kmm-timeshift"
   },
@@ -36,7 +31,8 @@
   "require-dev": {
     "php-mock/php-mock": "^2.1",
     "friendsofphp/php-cs-fixer": "^3.1",
-    "phpunit/phpunit": "dev-add-compatibility-with-php8-to-phpunit-7 as 7.*.x-dev",
+    "phpunit/phpunit": ">=8.5.23",
+    "yoast/phpunit-polyfills": "^1.0",
     "scrutinizer/ocular": "^1.5"
   }
 }

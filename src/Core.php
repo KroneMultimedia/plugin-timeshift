@@ -26,6 +26,140 @@ class Core {
         $this->add_metabox();
         // Disable WP's own revision system
         remove_post_type_support('post', 'revisions');
+
+        if (defined('WP_CLI') && WP_CLI) {
+            $this->registerCLI();
+        }
+    }
+
+    // timeshift table
+    public function registerCLI() {
+        \WP_CLI::add_command('krn_timeshift_table', [$this, 'krn_timeshift_table']);
+    }
+
+    private function cliLogError($text) {
+        $this->cliLog('ERROR', $text);
+    }
+
+    private function cliLog($type, $text) {
+        echo "$type: $text\n";
+    }
+
+    private function cliLogInfo($text) {
+        $this->cliLog('INFO', $text);
+    }
+
+    public function krn_timeshift_table($args, $assoc_args) {
+        if (! isset($assoc_args['postId'])) {
+            $this->cliLogError('missing param postId');
+
+            return false;
+        }
+        if (! is_numeric($assoc_args['postId'])) {
+            $this->cliLogError('invalid postId (not numeric)');
+
+            return false;
+        }
+
+        // check if valid post type
+        $post_type = get_post_type($assoc_args['postId']);
+        if (! $post_type) {
+            // use param post_type if set
+            if (isset($assoc_args['post_type'])) {
+                if (ctype_alnum($assoc_args['post_type'])) {
+                    $post_type = $assoc_args['post_type'];
+                }
+            } else {
+                $this->cliLogError('fully deleted post - use --post_type=article (for example)');
+
+                return false;
+            }
+        }
+
+        // show all timeshifts of post if no version is specified
+        if (! isset($assoc_args['timeshiftId'])) {
+            $timeshiftSelection = $this->sql_get_timeshifts_by_postId($assoc_args['postId'], $post_type);
+        } else {
+            $timeshiftSelection = $this->sql_get_timeshift_by_timeshift_Id($assoc_args['timeshiftId'], $post_type);
+        }
+
+        // show table with given data
+        $this->cli_timeshift_show_table($timeshiftSelection);
+
+        // if isset assoc_args restore
+        if (isset($assoc_args['restore'])) {
+            // restore timeshift & obtain postID
+            $restoredID = $this->krn_restore_timeshift($timeshiftSelection);
+            if (! $restoredID) {
+                $this->cliLogError('Restoring Timeshift failed');
+            } else {
+                $this->cliLogInfo('Timeshift/Post restored to ID: ' . $restoredID);
+            }
+        }
+    }
+
+    public function cli_timeshift_show_table($timeshifts) {
+        $timeshifts = array_reverse($timeshifts);
+        // output table
+        $mask = "|%-10s |%-10s |%-20s |%-30s |%-10s |%-30s \n";
+        printf($mask, 'id', 'post_id', 'create_date', 'title', 'last_edit', 'user');
+        foreach ($timeshifts as $value) {
+            $postPayload = unserialize($value->post_payload);
+            $last_edit_id = $postPayload->meta['_edit_last'][0];
+            $user = get_user_by('id', $last_edit_id);
+            printf($mask, $value->id, $value->post_id, $value->create_date, $postPayload->post->post_title, $last_edit_id, $user->user_login);
+        }
+    }
+
+    public function sql_get_timeshifts_by_postId($post_id, $post_type) {
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
+        $sql = "select * from $table_name where post_id=" . $post_id;
+        $timeshifts = $this->wpdb->get_results($sql);
+        if (! $timeshifts) {
+            $this->cliLogError('no entries in table');
+
+            return false;
+        }
+
+        return $timeshifts;
+    }
+
+    public function sql_get_timeshift_by_timeshift_Id($timeshiftId, $post_type) {
+        $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
+        $sql = "select * from $table_name where id=" . $timeshiftId;
+        $timeshift = $this->wpdb->get_results($sql);
+
+        return $timeshift;
+    }
+
+    // restore timeshift
+    public function krn_restore_timeshift($timeshift) {
+        $postPayload = unserialize($timeshift[0]->post_payload);
+
+        // if post status returns false => post is deleted completely
+        if (! get_post_status($postPayload->post->ID)) {
+            $postPayload->post->ID = 0;
+        }
+
+        $postObject = $postPayload->post;
+        $postObject->post_status = 'draft';
+
+        foreach ($postPayload->meta as $key => $val) {
+            $postPayload->meta[$key] = $val[0];
+        }
+
+        $postObject->guid = '';
+        $postID = wp_insert_post($postObject);
+
+        $meta = $postPayload->meta;
+
+        wp_update_post([
+                'ID' => $postID,
+                'meta_input'=> $meta,
+            ]
+        );
+
+        return $postID;
     }
 
     public function hasTimeshifts($post_id) {
