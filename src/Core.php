@@ -113,7 +113,7 @@ class Core {
 
     public function sql_get_timeshifts_by_postId($post_id, $post_type) {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
-        $sql = "select * from $table_name where post_id=" . $post_id;
+        $sql = "select * from `$table_name` where post_id=" . $post_id;
         $timeshifts = $this->wpdb->get_results($sql);
         if (! $timeshifts) {
             $this->cliLogError('no entries in table');
@@ -126,7 +126,7 @@ class Core {
 
     public function sql_get_timeshift_by_timeshift_Id($timeshiftId, $post_type) {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
-        $sql = "select * from $table_name where id=" . $timeshiftId;
+        $sql = "select * from `$table_name` where id=" . $timeshiftId;
         $timeshift = $this->wpdb->get_results($sql);
 
         return $timeshift;
@@ -166,7 +166,7 @@ class Core {
         $post_type = get_post_type($post_id);
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
         $this->checkTable($post_type);
-        $sql = "select count(1) as amount from $table_name where post_id=" . $post_id;
+        $sql = "select count(1) as amount from `$table_name` where post_id=" . $post_id;
         $r = $this->wpdb->get_results($sql);
 
         if ($r && 1 == count($r)) {
@@ -191,6 +191,10 @@ class Core {
         }
         // Keep adding the metabox even if no timeshifts available, i.e. will render timeshift box with only live version
         if (! isset($_GET['post'])) {
+            return;
+        }
+        $prod_post = get_post($_GET['post']);
+        if(true == apply_filters('krn_timeshift_disabled', false, $prod_post->post_type)) {
             return;
         }
         add_action('add_meta_boxes', function () use ($cl) {
@@ -250,7 +254,7 @@ class Core {
         if (! $this->timeshift_cached_meta) {
             $post_type = get_post_type($post_id);
             $table_name = $this->wpdb->prefix . 'timeshift_' . $post_type;
-            $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
+            $sql = "select * from `$table_name` where id=" . intval($_GET['timeshift']);
             $r = $this->wpdb->get_results($sql);
             if ($r && 1 == count($r)) {
                 $payload = unserialize($r[0]->post_payload);
@@ -273,7 +277,7 @@ class Core {
         }
         // Load timeshift
         $table_name = $this->wpdb->prefix . 'timeshift_' . $post->post_type;
-        $sql = "select * from $table_name where id=" . intval($_GET['timeshift']);
+        $sql = "select * from `$table_name` where id=" . intval($_GET['timeshift']);
         $r = $this->wpdb->get_results($sql);
         if ($r && 1 == count($r)) {
             $payload = unserialize($r[0]->post_payload);
@@ -314,7 +318,7 @@ class Core {
 
         $charset_collate = $this->wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
                 id int(12) NOT NULL AUTO_INCREMENT,
                 post_id int(12) NOT NULL,
                 create_date datetime default CURRENT_TIMESTAMP,
@@ -330,7 +334,7 @@ class Core {
 
     public function storeTimeshift($timeshift) {
         $table_name = $this->wpdb->prefix . 'timeshift_' . $timeshift->post->post_type;
-        $sql = "insert into $table_name (post_id, post_payload) VALUES(%d, '%s')";
+        $sql = "insert into `$table_name` (post_id, post_payload) VALUES(%d, '%s')";
         $query = $this->wpdb->prepare($sql, $timeshift->post->ID, serialize($timeshift));
         $this->wpdb->query($query);
     }
@@ -391,6 +395,9 @@ class Core {
             return;
         }
         $post_type = get_post_type($post_ID);
+        if(true == apply_filters('krn_timeshift_disabled', false, $post_type)) {
+            return;
+        }
         $this->checkTable($post_type);
 
         // Get previous save initiator
@@ -442,7 +449,7 @@ class Core {
 
         // count timeshift-versions
         $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
-        $sql = "select  count(1) as cnt from $table_name where post_id=" . $prod_post->ID;
+        $sql = "select  count(1) as cnt from `$table_name` where post_id=" . $prod_post->ID;
         $maxrows = $this->wpdb->get_results($sql);
         $allrows = (int) $maxrows[0]->{'cnt'};
 
@@ -467,7 +474,7 @@ class Core {
         }
 
         $table_name = $this->wpdb->prefix . 'timeshift_' . $prod_post->post_type;
-        $sql = "select  * from $table_name where post_id=" . $prod_post->ID . ' order by create_date desc limit ' . $start . ', ' . $this->timeshift_posts_per_page;
+        $sql = "select  * from `$table_name` where post_id=" . $prod_post->ID . ' order by create_date desc limit ' . $start . ', ' . $this->timeshift_posts_per_page;
         $rows = $this->wpdb->get_results($sql);
 
         return $rows;
