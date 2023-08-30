@@ -13,8 +13,7 @@ define('KRN_IS_TESTING', 1);
 
 class bootstrap
 {
-    public function __construct()
-    {
+    public function __construct() {
         $_tests_dir = getenv('WP_TESTS_DIR');
         if (! $_tests_dir) {
             $_tests_dir = rtrim(sys_get_temp_dir(), '/\\') . '/wordpress-tests-lib';
@@ -31,8 +30,7 @@ class bootstrap
         require $_tests_dir . '/includes/bootstrap.php';
     }
 
-    public function _manually_load_plugin()
-    {
+    public function _manually_load_plugin() {
         require dirname(dirname(__FILE__)) . '../../kmm-timeshift.php';
     }
 }
