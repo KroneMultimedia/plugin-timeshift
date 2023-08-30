@@ -555,6 +555,10 @@ class Core
 
         foreach ($rows as $rev) {
             $timeshift = unserialize($rev->post_payload);
+            if(!$timeshift) { // broken record
+                continue;
+            }
+
             $style = '';
 
             // highlight currently loaded version
