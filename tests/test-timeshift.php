@@ -18,7 +18,7 @@ class TimeshiftTestDB
     }
 }
 
-class TestTimeshift extends \WP_UnitTestCase
+class TestTimeshift extends WP_UnitTestCase
 {
     public function setUp(): void {
         // setup a rest server

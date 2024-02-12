@@ -367,7 +367,7 @@ class Core
         $this->krn_pre_post_update($postID, null, 'Backend', false);
     }
 
-    public function pre_post_update(int $post_ID, array $data = null) {
+    public function pre_post_update(int $post_ID, ?array $data = null) {
         $this->krn_pre_post_update($post_ID, $data);
     }
 
@@ -385,7 +385,7 @@ class Core
         $this->storeTimeshift($timeshift);
     }
 
-    public function krn_pre_post_update(int $post_ID, array $data = null, $editSource = 'Backend', $recordTimeshift = true) {
+    public function krn_pre_post_update(int $post_ID, ?array $data = null, $editSource = 'Backend', $recordTimeshift = true) {
         if (true == apply_filters('krn_timeshift_skip', false, $post_ID, $data, $editSource)) {
             return;
         }
