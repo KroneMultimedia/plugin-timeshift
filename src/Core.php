@@ -490,9 +490,13 @@ class Core
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
         $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
         $last_editor = $this->wpdb->get_var($sql_last_editor);
+        $desknet = get_post_meta($prod_post->ID, 'desk_net', true);
+        $desk_net_id = get_post_meta($prod_post->ID, 'publications_id', true);
 
         // check save initiator
-        if (get_post_meta($prod_post->ID, 'save_initiator')) {
+        if ($desknet || $desk_net_id) {
+            $save_initiator_live = 'Desknet';
+        } elseif (get_post_meta($prod_post->ID, 'save_initiator')) {
             $save_initiator_live = get_post_meta($prod_post->ID, 'save_initiator')[0];
         } else {
             $save_initiator_live = __('unknown', 'kmm-timeshift');
@@ -548,8 +552,9 @@ class Core
                 $authorName = __('unknown', 'kmm-timeshift');
             }
 
-            // check save initiator
-            if (array_key_exists('save_initiator', $timeshift->meta) && count($timeshift->meta['save_initiator']) > 0) {
+            if($desknet || $desk_net_id) {
+                $save_initiator_timeshift = 'Desknet';
+            } elseif (array_key_exists('save_initiator', $timeshift->meta) && count($timeshift->meta['save_initiator']) > 0) {
                 $save_initiator_timeshift = $timeshift->meta['save_initiator'][0];
             } else {
                 $save_initiator_timeshift = __('unknown', 'kmm-timeshift');
