@@ -155,9 +155,9 @@ class Core
         $meta = $postPayload->meta;
 
         wp_update_post([
-                'ID' => $postID,
-                'meta_input'=> $meta,
-            ]
+            'ID' => $postID,
+            'meta_input' => $meta,
+        ]
         );
 
         return $postID;
@@ -335,7 +335,7 @@ class Core
     }
 
     public function storeTimeshift($timeshift) {
-        if(isset($_SERVER["skip_timeshift"])) {
+        if (isset($_SERVER['skip_timeshift'])) {
             return;
         }
         $table_name = $this->wpdb->prefix . 'timeshift_' . $timeshift->post->post_type;
@@ -398,7 +398,7 @@ class Core
         $timeshiftVer = $this->updateTimeshiftVersion($post_ID, $mdata);
         $mdata['_timeshift_version'][0] = $timeshiftVer;
         $mdata['KRN_MODE'] = 'MANUAL';
-        if (!is_array($initiator)) {
+        if (! is_array($initiator)) {
             $initiator = [$initiator];
         }
 
