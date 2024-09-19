@@ -295,7 +295,7 @@ class Core
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_pagination_timeshift', [$this, 'timeshift_metabox']);
         add_action('before_delete_post', [$this, 'before_delete'], 1, 1);
-        add_action('krn_create_timeshift_entry', [$this, 'create_timeshift_desknet'], 1, 2);
+        add_action('krn_create_timeshift_entry', [$this, 'create_timeshift_entry'], 1, 2);
     }
 
     public function admin_notice() {
@@ -389,7 +389,7 @@ class Core
         $this->storeTimeshift($timeshift);
     }
 
-    public function create_timeshift_desknet($post_ID, $initiator) {
+    public function create_timeshift_entry($post_ID, $initiator) {
         $mdata = get_metadata('post', $post_ID);
         $post = get_post($post_ID);
         unset($mdata['_edit_lock']);
