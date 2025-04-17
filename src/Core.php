@@ -240,8 +240,12 @@ class Core
 
     public function update_post_metadata($check, int $object_id, string $meta_key, $meta_value, $prev_value) {
         if ('_edit_last' == $meta_key) {
-            $lo = get_post_meta($object_id, '_edit_last', true);
-            $this->last_author = $lo;
+            $current_value = get_post_meta($object_id, '_edit_last', true);
+            // Prevent updating if a value already exists
+            if (!empty($current_value)) {
+                return false; // Abort the update
+            }
+            $this->last_author = $meta_value;
         }
 
         return null;
@@ -510,8 +514,11 @@ class Core
 
         // get last editor
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
-        $sql_last_editor = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
-        $last_editor = $this->wpdb->get_var($sql_last_editor);
+        $sql_author = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
+        $sql_edit_lock = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_lock'";
+        $author = $this->wpdb->get_var($sql_author);
+        $edit_lock = $this->wpdb->get_var($sql_edit_lock);
+        $last_editor = explode(':', $edit_lock)[1];
 
         // check save initiator
         if (get_post_meta($prod_post->ID, 'save_initiator')) {
@@ -527,6 +534,7 @@ class Core
         $output .= '<th width="35%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Title', 'kmm-timeshift') . '</th>';
         $output .= '<th width="25%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Snapshot Date', 'kmm-timeshift') . '</th>';
         $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Author', 'kmm-timeshift') . '</th>';
+        $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Last Modified', 'kmm-timeshift') . '</th>';
         $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Save-initiator', 'kmm-timeshift') . '</th>';
         $output .= '<th width="10%" id="columnname" class="manage-column column-columnname"  scope="col">' . __('Actions', 'kmm-timeshift') . '</th>';
         $output .= '</tr>';
@@ -538,6 +546,7 @@ class Core
         $output .= '<td>' . get_avatar($last_editor, 30) . '</td>';
         $output .= '<td>' . $prod_post->post_title . '</td>';
         $output .= '<td>' . $prod_post->post_modified . '</td>';
+        $output .= '<td>' . get_the_author_meta('display_name', $author) . '</td>';
         $output .= '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
         $output .= '<td>' . $save_initiator_live . '</td>';
         $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
