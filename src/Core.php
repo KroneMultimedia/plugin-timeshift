@@ -1,4 +1,5 @@
 <?php
+
 /*
  *
  *
@@ -242,7 +243,7 @@ class Core
         if ('_edit_last' == $meta_key) {
             $current_value = get_post_meta($object_id, '_edit_last', true);
             // Prevent updating if a value already exists
-            if (!empty($current_value)) {
+            if (! empty($current_value)) {
                 return false; // Abort the update
             }
             $this->last_author = $meta_value;
