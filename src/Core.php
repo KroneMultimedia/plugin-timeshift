@@ -241,12 +241,8 @@ class Core
 
     public function update_post_metadata($check, int $object_id, string $meta_key, $meta_value, $prev_value) {
         if ('_edit_last' == $meta_key) {
-            $current_value = get_post_meta($object_id, '_edit_last', true);
-            // Prevent updating if a value already exists
-            if (! empty($current_value)) {
-                return false; // Abort the update
-            }
-            $this->last_author = $meta_value;
+            $lo = get_post_meta($object_id, '_edit_last', true);
+            $this->last_author = $lo;
         }
 
         return null;
@@ -515,11 +511,14 @@ class Core
 
         // get last editor
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
-        $sql_author = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
-        $sql_edit_lock = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_lock'";
-        $author = $this->wpdb->get_var($sql_author);
-        $edit_lock = $this->wpdb->get_var($sql_edit_lock);
-        $last_editor = explode(':', $edit_lock)[1];
+        $sql_edit_selection = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
+        
+        $current_value = $this->wpdb->get_var($sql_edit_selection);
+
+        //get author (this var doesnt get changed)
+        $this->last_author = $prod_post->post_author;
+        $this->last_editor = $current_value;
+
 
         // check save initiator
         if (get_post_meta($prod_post->ID, 'save_initiator')) {
@@ -544,11 +543,11 @@ class Core
 
         // live-version
         $output .= '<tr style="font-weight: 800;">';
-        $output .= '<td>' . get_avatar($last_editor, 30) . '</td>';
+        $output .= '<td>' . get_avatar($this->last_editor, 30) . '</td>';
         $output .= '<td>' . $prod_post->post_title . '</td>';
         $output .= '<td>' . $prod_post->post_modified . '</td>';
-        $output .= '<td>' . get_the_author_meta('display_name', $author) . '</td>';
-        $output .= '<td>' . get_the_author_meta('display_name', $last_editor) . '</td>';
+        $output .= '<td>' . get_the_author_meta('display_name', $this->last_author) . '</td>';
+        $output .= '<td>' . get_the_author_meta('display_name', $this->last_editor) . '</td>';
         $output .= '<td>' . $save_initiator_live . '</td>';
         $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
         $output .= '</tr>';
@@ -574,10 +573,13 @@ class Core
             // sometimes _edit_last is defined in a wrong way
             if (is_array($timeshift->meta['_edit_last']) && count($timeshift->meta['_edit_last']) > 0) {
                 $avatar = get_avatar($timeshift->meta['_edit_last'][0], 30);
-                $authorName = get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]);
+
+                $authorName = get_the_author_meta('display_name', $timeshift->post->post_author);
+                $editorName = get_the_author_meta('display_name', $timeshift->meta['_edit_last'][0]);
             } else {
                 $avatar = 'unknown';
                 $authorName = __('unknown', 'kmm-timeshift');
+                $editorName = __('unknown', 'kmm-timeshift');
             }
 
             // check save initiator
@@ -592,9 +594,11 @@ class Core
             $output .= '<td>' . $timeshift->post->post_title . '</td>';
             $output .= '<td>' . $timeshift->post->post_modified . '</td>';
             $output .= '<td>' . $authorName . '</td>';
+            $output .= '<td>' . $editorName . '</td>';
             $output .= '<td>' . $save_initiator_timeshift . '</td>';
             $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit&timeshift=' . $rev->id . '"><span class="dashicons dashicons-backup"></span></a></td>';
             $output .= '</tr>';
+            // do code here table broken
         }
 
         $output .= '</tbody>';
