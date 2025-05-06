@@ -512,13 +512,12 @@ class Core
         // get last editor
         $table_postmeta = $this->wpdb->prefix . 'postmeta';
         $sql_edit_selection = 'select meta_value from ' . $table_postmeta . ' where post_id=' . $prod_post->ID . " AND meta_key='_edit_last'";
-        
+
         $current_value = $this->wpdb->get_var($sql_edit_selection);
 
-        //get author (this var doesnt get changed)
+        // get author (this var doesnt get changed)
         $this->last_author = $prod_post->post_author;
         $this->last_editor = $current_value;
-
 
         // check save initiator
         if (get_post_meta($prod_post->ID, 'save_initiator')) {
