@@ -548,7 +548,7 @@ class Core
         $output .= '<td>' . get_the_author_meta('display_name', $this->last_author) . '</td>';
         $output .= '<td>' . get_the_author_meta('display_name', $this->last_editor) . '</td>';
         $output .= '<td>' . $save_initiator_live . '</td>';
-        $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit"><span class="dashicons dashicons-admin-site"></span></A></td>';
+        $output .= '<td><a href="post.php?post=' . $prod_post->ID . '&action=edit"><span class="dashicons dashicons-admin-site"></span></a></td>';
         $output .= '</tr>';
 
         foreach ($rows as $rev) {
