@@ -1,4 +1,5 @@
 <?php
+
 /*
  *
  *
@@ -11,9 +12,13 @@ namespace KMM\Timeshift;
 
 class Core
 {
+    private $i18n;
+    private $wpdb;
     private $plugin_dir;
     private $last_author = false;
     private $timeshift_cached_meta;
+    private $timeshift_posts_per_page;
+    private $pagination_ajax_action;
 
     public function __construct($i18n) {
         global $wpdb;
@@ -265,10 +270,10 @@ class Core
         // is the requested meta data in the stored snapshot
         if ($this->timeshift_cached_meta && isset($this->timeshift_cached_meta[$key])) {
             return $this->timeshift_cached_meta[$key];
-        } else {
-            // Otherwise return default value, like acf core fields.
-            return $value;
         }
+
+        // Otherwise return default value, like acf core fields.
+        return $value;
     }
 
     public function inject_timeshift($p) {
@@ -355,10 +360,10 @@ class Core
         if ($verToSave > 1) {
             // Previous version for when timeshift existed before
             return $verToSave - 1;
-        } else {
-            // When this is the first timeshift
-            return 0;
         }
+
+        // When this is the first timeshift
+        return 0;
     }
 
     public function create_snapshot($postID, $editSource) {

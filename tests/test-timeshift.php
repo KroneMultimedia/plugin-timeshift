@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @covers \KMM\Timeshift\Core
  */
@@ -20,6 +21,8 @@ class TimeshiftTestDB
 
 class TestTimeshift extends WP_UnitTestCase
 {
+    public $core;
+
     public function setUp(): void {
         // setup a rest server
         parent::setUp();
@@ -436,6 +439,8 @@ class TestTimeshift extends WP_UnitTestCase
     public function cleanHtml($html) {
         // Remove dates
         $html = preg_replace('/<td>\d{4}-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})<\/td>/', '', $html);
+        // Normalize gravatar host changes between WP versions
+        $html = str_replace('https://secure.gravatar.com', 'http://.gravatar.com', $html);
         // Remove Gravatar IDs
         $html = preg_replace('/(?=\d+.gravatar.com)\d+/', '', $html);
         // Remove timeshift version
