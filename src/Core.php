@@ -13,7 +13,7 @@ namespace KMM\Timeshift;
 class Core
 {
     private $i18n;
-    private $wpdb;
+    public $wpdb;
     private $plugin_dir;
     private $last_author = false;
     private $timeshift_cached_meta;
