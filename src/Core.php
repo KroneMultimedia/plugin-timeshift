@@ -321,8 +321,8 @@ class Core
         $charset_collate = $this->wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
-                id int(12) NOT NULL AUTO_INCREMENT,
-                post_id int(12) NOT NULL,
+                id bigint(20) NOT NULL AUTO_INCREMENT,
+                post_id bigint(20) NOT NULL,
                 create_date datetime default CURRENT_TIMESTAMP,
                 post_payload LONGTEXT,
                 PRIMARY KEY (id)
