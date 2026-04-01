@@ -448,7 +448,7 @@ class TestTimeshift extends WP_UnitTestCase
         // Remove post ID
         $html = preg_replace('/(?<=\?post=)\d+/', '', $html);
         // Replace Gravatar hash
-        $html = preg_replace('#(gravatar\.com/avatar/)[0-9a-f]{32}#i', '$1', $html);
+        $html = preg_replace('/avatar\/[0-9a-f]{32}/i', 'avatar/', $html);
 
         return $html;
     }
